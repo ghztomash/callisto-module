@@ -56,23 +56,6 @@ GenerateClassCluster=0
 DocumentUniqueId=ERQHAVMJ
 
 [Document2]
-DocumentPath=..\..\..\..\..\..\..\Public\Documents\Altium\Library\Imported Teensy_3_and_LC_Series_Boards_v1.4.PrjPcb\Teensy_3_and_LC_Series_Boards_v1.4.IntLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=
-
-[Document3]
 DocumentPath=callisto_schematics_analog.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -89,7 +72,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=WXNMKVKK
 
-[Document4]
+[Document3]
 DocumentPath=callisto_board.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -106,8 +89,42 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=AVEWQAHR
 
-[Document5]
+[Document4]
 DocumentPath=..\..\..\..\..\..\..\Public\Documents\Altium\Library\Microchip\Microchip Linear Devices.IntLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
+[Document5]
+DocumentPath=..\..\..\..\..\..\..\Public\Documents\Altium\Library\Imported Teensy_3_and_LC_Series_Boards_v1.4.PrjPcb\Teensy_3_and_LC_Series_Boards_v1.SCHLIB
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
+[Document6]
+DocumentPath=..\..\..\..\..\..\..\Public\Documents\Altium\Library\Imported Teensy_3_and_LC_Series_Boards_v1.4.PrjPcb\Teensy_3_and_LC_Series_Boards_v1.PCBLIB
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
