@@ -1,0 +1,533 @@
+#include <Audio.h>
+
+
+// -------------- VT100 Defines ----------------------
+#define VTBLACK 	0
+#define VTRED 		1
+#define VTGREEN 	2
+#define VTYELLOW 	3
+#define VTBLUE	 	4
+#define VTMAGENTA 	5
+#define VTCYAN 		6
+#define VTWHITE 	7
+
+#define VTNORMAL 	0
+#define VTBOLD	 	1
+#define VTLINE	 	4
+#define VTBLINK 	5
+
+#define TAB_INCREMENT 8
+#define TABLE_SETUP 1
+#define TABLE_ADC 7
+#define TABLE_GRAPH 22
+
+#define HIGHLOW(a) (a ? "\033[5;32;40m- HIGH -\033[0;37;40m" : "\033[5;31;40m- LOW -\033[0;37;40m")
+// ---------------------------------------------------
+
+#define LEDA 0
+#define LEDB 1
+#define LEDC 2
+#define LEDD 3
+#define LEDE 4
+#define LEDF 5
+#define LEDTRIG 10
+
+#define SWITCHA 8
+#define SWITCHB 9
+
+#define TRIGIN 11
+
+#define CVA  A0
+#define POTA A1
+#define CVB  A2
+#define POTB A3
+#define CVC  A4
+#define POTC A5
+#define CVD  A6
+#define POTD A7
+#define CVE  A8
+#define POTE A9
+#define CVF  A10
+#define POTF A11
+
+#define ADC_RESOLUTION 13
+#define ADC_AVERAGING 32
+#define SAMPLES 10
+
+AudioSynthWaveform				osc1;
+AudioSynthWaveform				osc2;
+AudioAnalyzeRMS      			rms1;
+AudioOutputAnalog 				out1;
+AudioConnection					patchCordrms(osc2, 0, rms1, 0);
+AudioConnection					patchCordout(osc1, 0, out1, 0);
+
+int trig = 0;
+int lastTrig = 0;
+
+int currentModeA = 5;
+int currentModeB = 0;
+
+bool modeButtonA = LOW;
+bool lastModeButtonA = LOW;
+bool modeButtonB = LOW;
+bool lastModeButtonB = LOW;
+
+const int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
+const float VREF = 3.3;		// ADC reference voltage (= power supply)
+const float VINPUT = 1.65;	// ADC input voltage from Normalized Jack      
+const int EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
+
+int ledsPins[6] = {LEDA, LEDB, LEDC, LEDD, LEDE, LEDF};
+int ledsStates[6] = {0};
+int trigLedState = 0;
+
+int adcPins[12] = {CVA, POTA, CVB, POTB, CVC, POTC, CVD, POTD, CVE, POTE, CVF, POTF};
+int adcVal[12] = {0};
+//uint32_t adcSum[12] = {0};
+
+float frequency[] = {100, 1000, 10000};
+float amplitude[] = {0.0, 0.5, 1.0};
+
+int calibration[] = {4279, 4266, 4244, 4256};
+
+const int MSGMAX = 8192;
+char msg[MSGMAX];
+char msgTemp[2048];
+int  msgLen=0;
+
+long oldT;
+long durT;
+
+void setup() {
+
+  for (int i=0; i<6; i++){
+	pinMode(ledsPins[i], OUTPUT);
+	digitalWrite(ledsPins[i], HIGH);
+	delay(100);
+  }
+  for (int i=0; i<6; i++){
+	digitalWrite(ledsPins[i], LOW);
+	delay(100);
+  }
+  pinMode(LEDTRIG, OUTPUT);
+  digitalWrite(LEDTRIG, HIGH);
+
+  pinMode(TRIGIN, INPUT_PULLUP);
+  pinMode(SWITCHA, INPUT_PULLUP);
+  pinMode(SWITCHB, INPUT_PULLUP);
+  
+  digitalWrite(ledsPins[currentModeA], HIGH);
+  digitalWrite(ledsPins[currentModeB], HIGH);
+
+  analogReference(EXTERNAL);
+  analogReadResolution(ADC_RESOLUTION);
+  analogReadAveraging(ADC_AVERAGING);
+  
+  AudioMemory(64);
+  osc1.begin(WAVEFORM_SINE);
+  osc1.frequency(frequency[0]);
+  osc1.amplitude(amplitude[2]);
+  osc2.begin(1.0, 0.25, WAVEFORM_SINE);
+  
+}
+
+void loop() {
+	
+  int tab = 0;
+
+  modeButtonA = digitalRead(SWITCHA);
+  
+  if(modeButtonA != lastModeButtonA){
+	  if(modeButtonA == LOW){
+		  digitalWrite(ledsPins[currentModeA], LOW);
+		  currentModeA++;
+		  if(currentModeA >= 6)
+			  currentModeA = 3;
+		  digitalWrite(ledsPins[currentModeA], HIGH);
+		  osc1.amplitude(amplitude[currentModeA-3]);
+	  }
+	lastModeButtonA = modeButtonA;
+  }
+  
+  modeButtonB = digitalRead(SWITCHB);
+  
+  if(modeButtonB != lastModeButtonB){
+	  if(modeButtonB == LOW){
+		  digitalWrite(ledsPins[currentModeB], LOW);
+		  currentModeB++;
+		  if(currentModeB >= 3)
+			  currentModeB = 0;
+		  digitalWrite(ledsPins[currentModeB], HIGH);
+		  osc1.frequency(frequency[currentModeB]);
+	  }
+	lastModeButtonB = modeButtonB;
+  }
+  
+  trig = digitalRead(TRIGIN);
+  if(trig != lastTrig){
+	  if(trig == LOW){
+		  
+	  }
+	lastTrig = trig;
+  }
+  
+  printClear();
+  setCursor(1,1);
+  
+  //drawRow(1,1,30,205);
+  //drawRow(1,44,30,205);
+  drawBox(TABLE_SETUP,1,74,4);
+  setCursor(TABLE_SETUP,30);
+  print("-<");
+  printColor(VTBOLD,random(1,7),VTBLACK);
+  print(" CALLISTO "); //14
+  resetColor();
+  print(">-");
+  setCursor(TABLE_SETUP+1,3);
+  print("ADC Res: ");
+  print(ADC_RESOLUTION);
+  print("-bit");
+  setCursor(TABLE_SETUP+1,26);
+  print("ADC Avrg: ");
+  print(ADC_AVERAGING);
+  setCursor(TABLE_SETUP+1,50);
+  print("ADC max: ");
+  print(MAXADC);
+  
+  setCursor(TABLE_SETUP+2,3);
+  print("Stat Size: ");
+  print(SAMPLES);
+  setCursor(TABLE_SETUP+2,26);
+  print("ADC duration: ");
+  print((int)durT);
+  print("uS");
+  setCursor(TABLE_SETUP+2,50);
+  print("ModeA: ");
+  print(currentModeA-3);
+  
+  setCursor(TABLE_SETUP+3,3);
+  print("DAC Frequency: ");
+  print(frequency[currentModeB],0);
+  print("Hz");
+  setCursor(TABLE_SETUP+3,26);
+  print("DAC Amplitude: ");
+  print(amplitude[currentModeA-3]);
+  setCursor(TABLE_SETUP+3,50);
+  print("ModeB: ");
+  print(currentModeB);
+  
+  setCursor(TABLE_SETUP+4,3);
+  print("Trigger: ");
+  print(HIGHLOW(!trig));
+  setCursor(TABLE_SETUP+4,26);
+  print("Switch A: ");
+  print(HIGHLOW(!modeButtonA));
+  setCursor(TABLE_SETUP+4,50);
+  print("Switch B: ");
+  print(HIGHLOW(!modeButtonB));
+  
+  drawBox(TABLE_ADC,1,74,13);
+  drawBox(TABLE_GRAPH,1,74,12);
+  
+  tab=3;
+  setCursor(TABLE_ADC+1,tab);
+  printColor(VTBOLD,VTWHITE, VTBLACK);
+  print("PIN");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("ADC");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("ADC V");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print(" VIN");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("VAR");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("STD");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("AVG");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("PPN");
+  //cursorForward(6);
+  resetColor();
+  println();
+  
+  // TODO MEAN AND STD
+
+  
+  for (int i=0; i<12; i++ ){
+	  
+	  delay(5);
+	  
+	  oldT = micros();
+	  adcVal[i] = analogRead(adcPins[i]);
+	  durT = micros() - oldT;
+	  
+	  long datSum = 0;  // reset our accumulated sum of input values to zero
+      int sMax = 0;
+      int sMin = MAXADC;
+      long n;            // count of how many readings so far
+      double x,mean,delta,sumsq,m2,variance,stdev;  // to calculate standard deviation
+	  
+	  sumsq = 0; // initialize running squared sum of differences
+      n = 0;     // have not made any ADC readings yet
+      mean = 0; // start off with running mean at zero
+      m2 = 0;
+	  
+	  
+	  for (int j=0; j<SAMPLES; j++) {
+        x = analogRead(adcPins[i]);
+        datSum += x;
+        if (x > sMax) sMax = x;
+        if (x < sMin) sMin = x;
+        n++;
+        delta = x - mean;
+        mean += delta/n;
+        m2 += (delta * (x - mean));
+      }
+	  
+	  variance = m2/(n-1);  // (n-1):Sample Variance  (n): Population Variance
+      stdev = sqrt(variance);  // Calculate standard deviation
+	  float datAvg = (1.0*datSum)/n;
+	  int ppNoise = sMax - sMin;
+	  int sOffset = datAvg - EXPECTED;
+	  
+	  tab=3;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print("A");
+	  print(i);
+	  print(":");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print(adcVal[i]);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print((adcVal[i]/(float)MAXADC)*3.3, 3);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  if(i==0)
+		print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7, 3, 1);
+	  else if(i%2==0)
+		print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+5, 3, 1);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print((float)variance,1);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print((float)stdev);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print((float)datAvg,1);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  print((int)ppNoise);
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+2+i, tab);
+	  
+	  tab=3;
+	  setCursor(TABLE_GRAPH+1+i, tab);
+	  print("A");
+	  print(i);
+	  print(":");
+	  
+	  drawRow(TABLE_GRAPH+1+i, 8,(adcVal[i]>>7), 219 );
+  }
+  
+  setCursor(TABLE_GRAPH+14,2);
+	
+  if(rms1.available()){
+	float rms = rms1.read();
+	print("Trig LED: ");
+	print(rms* 255, 0);
+	analogWrite(LEDTRIG, rms * 255);
+  }
+  
+  println();
+  
+  print("Bring up firmware 1.0v by Tomash GHz");
+  
+  printWrite();
+  
+  delay(2);
+  
+}
+
+float linToExp(float index, float range){
+  //convert linear values to exponential
+  float ratio = pow(range, 1/(float)range);
+  return pow(ratio,index);
+}
+
+void printClear(){
+	msg[0] = '\0';
+	msgLen = sprintf(msg, "\033[2J\033[?25l"); //\033[0;0H
+}
+
+void print(const char str[]){
+	if(strlen(msg) + strlen(str) >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, str);
+}
+
+void print(const String &s){
+	if(strlen(msg) + strlen(s.c_str()) >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, s.c_str());
+}
+
+void print(int num){
+	int tLen = sprintf(msgTemp,"%d",num);
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void print(float num){
+	print(num ,2);
+}
+
+void print(float num, int d){
+	int tLen = 0;
+	
+	switch (d){
+		case 0:
+			tLen = sprintf(msgTemp,"%.0f",num);
+			break;
+		case 1:
+			tLen = sprintf(msgTemp,"%.1f",num);
+			break;
+		case 2:
+			tLen = sprintf(msgTemp,"%.2f",num);
+			break;
+		case 3:
+			tLen = sprintf(msgTemp,"%.3f",num);
+			break;
+		case 4:
+			tLen = sprintf(msgTemp,"%.4f",num);
+			break;
+	}
+	
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void print(float num, int d, int s){
+	
+	if(s==0){
+		print(num,d);
+		return;
+	}
+	
+	int tLen = 0;
+	
+	switch (d){
+		case 0:
+			tLen = sprintf(msgTemp,"%+.0f",num);
+			break;
+		case 1:
+			tLen = sprintf(msgTemp,"%+.1f",num);
+			break;
+		case 2:
+			tLen = sprintf(msgTemp,"%+.2f",num);
+			break;
+		case 3:
+			tLen = sprintf(msgTemp,"%+.3f",num);
+			break;
+		case 4:
+			tLen = sprintf(msgTemp,"%+.4f",num);
+			break;
+	}
+	
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void println(){
+	int tLen = sprintf(msgTemp,"\n\033[1C");
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void printWrite(){
+	Serial.write(msg);
+	msg[0] = '\0';
+	msgLen = strlen(msg);
+}
+
+void printColor(int attr, int fore, int back){
+	int tLen = sprintf(msgTemp,"\033[%d;%d;%dm",attr, (30+fore), (40+back));
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void resetColor(){
+	int tLen = sprintf(msgTemp,"\033[0;37;40m");
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void setCursor(int x, int y){
+	int tLen = sprintf(msgTemp,"\033[%d;%dH", x, y);
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void cursorForward(int x){
+	int tLen = sprintf(msgTemp,"\033[%dC",x);
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void drawRow(int x, int y, int r, char c){
+	setCursor(x, y);
+	msgTemp[0] = '\0';
+	int tLen = strlen(msgTemp);
+	for(int i = 0; i<r; i++){
+		tLen += sprintf(msgTemp,"%s%c", msgTemp, char(c));
+	}
+	
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
+void drawCol(int x, int y, int r, char c){
+	for(int i = 0; i<r; i++){
+		drawRow(x+i, y, 1, c);
+	}
+}
+
+void drawBox(int x, int y, int w, int h){
+	drawRow(x, y+1, w, 205);
+	drawRow(x+h+1, y+1, w, 205);
+	drawCol(x+1, y, h, 186);
+	drawCol(x+1, y+w+1, h, 186);
+	drawRow(x, y, 1, 201);
+	drawRow(x+h+1, y, 1, 200);
+	drawRow(x, y+w+1, 1, 187);
+	drawRow(x+h+1, y+w+1, 1, 188);
+}
