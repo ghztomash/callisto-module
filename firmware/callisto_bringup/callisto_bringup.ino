@@ -1,6 +1,5 @@
 #include <Audio.h>
 
-
 // -------------- VT100 Defines ----------------------
 #define VTBLACK 	0
 #define VTRED 		1
@@ -21,9 +20,10 @@
 #define TABLE_ADC 7
 #define TABLE_GRAPH 22
 
-#define HIGHLOW(a) (a ? "\033[5;32;40m- HIGH -\033[0;37;40m" : "\033[5;31;40m- LOW -\033[0;37;40m")
+#define HIGHLOW(a) (a ? "\033[0;32;40m- HIGH -\033[0;37;40m" : "\033[0;31;40m- LOW -\033[0;37;40m")
 // ---------------------------------------------------
 
+// PIN defines
 #define LEDA 0
 #define LEDB 1
 #define LEDC 2
@@ -50,17 +50,19 @@
 #define CVF  A10
 #define POTF A11
 
-#define ADC_RESOLUTION 13
+#define ADC_RESOLUTION 10
 #define ADC_AVERAGING 32
-#define SAMPLES 10
+#define SAMPLES 5000
 
-AudioSynthWaveform				osc1;
+// Audio Objects
+AudioSynthWaveformSine			osc1;
 AudioSynthWaveform				osc2;
 AudioAnalyzeRMS      			rms1;
 AudioOutputAnalog 				out1;
 AudioConnection					patchCordrms(osc2, 0, rms1, 0);
 AudioConnection					patchCordout(osc1, 0, out1, 0);
 
+// Global Variables
 int trig = 0;
 int lastTrig = 0;
 
@@ -74,8 +76,8 @@ bool lastModeButtonB = LOW;
 
 const int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
 const float VREF = 3.3;		// ADC reference voltage (= power supply)
-const float VINPUT = 1.65;	// ADC input voltage from Normalized Jack      
-const int EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
+float VINPUT = 1.65;	// ADC input voltage from Normalized Jack      
+int EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
 
 int ledsPins[6] = {LEDA, LEDB, LEDC, LEDD, LEDE, LEDF};
 int ledsStates[6] = {0};
@@ -94,6 +96,8 @@ const int MSGMAX = 8192;
 char msg[MSGMAX];
 char msgTemp[2048];
 int  msgLen=0;
+
+char inString[124];
 
 long oldT;
 long durT;
@@ -124,10 +128,12 @@ void setup() {
   analogReadAveraging(ADC_AVERAGING);
   
   AudioMemory(64);
-  osc1.begin(WAVEFORM_SINE);
+  //osc1.begin(WAVEFORM_SINE);
   osc1.frequency(frequency[0]);
   osc1.amplitude(amplitude[2]);
   osc2.begin(1.0, 0.25, WAVEFORM_SINE);
+  
+  inString[0]='\0';
   
 }
 
@@ -171,18 +177,12 @@ void loop() {
 	lastTrig = trig;
   }
   
-  printClear();
-  setCursor(1,1);
+  //printClear();
+  //setCursor(1,1);
   
   //drawRow(1,1,30,205);
   //drawRow(1,44,30,205);
-  drawBox(TABLE_SETUP,1,74,4);
-  setCursor(TABLE_SETUP,30);
-  print("-<");
-  printColor(VTBOLD,random(1,7),VTBLACK);
-  print(" CALLISTO "); //14
-  resetColor();
-  print(">-");
+  //drawBox(TABLE_SETUP,1,74,4);
   setCursor(TABLE_SETUP+1,3);
   print("ADC Res: ");
   print(ADC_RESOLUTION);
@@ -195,6 +195,7 @@ void loop() {
   print(MAXADC);
   
   setCursor(TABLE_SETUP+2,3);
+  eraseLine();
   print("Stat Size: ");
   print(SAMPLES);
   setCursor(TABLE_SETUP+2,26);
@@ -206,6 +207,7 @@ void loop() {
   print(currentModeA-3);
   
   setCursor(TABLE_SETUP+3,3);
+  eraseLine();
   print("DAC Frequency: ");
   print(frequency[currentModeB],0);
   print("Hz");
@@ -217,6 +219,7 @@ void loop() {
   print(currentModeB);
   
   setCursor(TABLE_SETUP+4,3);
+  eraseLine();
   print("Trigger: ");
   print(HIGHLOW(!trig));
   setCursor(TABLE_SETUP+4,26);
@@ -226,8 +229,9 @@ void loop() {
   print("Switch B: ");
   print(HIGHLOW(!modeButtonB));
   
-  drawBox(TABLE_ADC,1,74,13);
-  drawBox(TABLE_GRAPH,1,74,12);
+  //drawBox(TABLE_SETUP,1,74,4);
+  //drawBox(TABLE_ADC,1,74,13);
+  //drawBox(TABLE_GRAPH,1,74,12);
   
   tab=3;
   setCursor(TABLE_ADC+1,tab);
@@ -254,6 +258,9 @@ void loop() {
   tab+=TAB_INCREMENT;
   setCursor(TABLE_ADC+1,tab);
   print("PPN");
+  tab+=TAB_INCREMENT;
+  setCursor(TABLE_ADC+1,tab);
+  print("OFF");
   //cursorForward(6);
   resetColor();
   println();
@@ -298,8 +305,14 @@ void loop() {
 	  int ppNoise = sMax - sMin;
 	  int sOffset = datAvg - EXPECTED;
 	  
+	  if(i%2==0)
+		printColor(VTNORMAL,VTYELLOW,VTBLACK);
+	  else
+		resetColor();
+	  
 	  tab=3;
 	  setCursor(TABLE_ADC+2+i, tab);
+	  eraseLine();
 	  print("A");
 	  print(i);
 	  print(":");
@@ -329,9 +342,11 @@ void loop() {
 	  print((int)ppNoise);
 	  tab+=TAB_INCREMENT;
 	  setCursor(TABLE_ADC+2+i, tab);
+	  print((int)sOffset);
 	  
 	  tab=3;
 	  setCursor(TABLE_GRAPH+1+i, tab);
+	  eraseLine();
 	  print("A");
 	  print(i);
 	  print(":");
@@ -339,7 +354,20 @@ void loop() {
 	  drawRow(TABLE_GRAPH+1+i, 8,(adcVal[i]>>7), 219 );
   }
   
+  //drawBox(TABLE_SETUP,1,74,4);
+  //drawBox(TABLE_ADC,1,74,13);
+  //drawBox(TABLE_GRAPH,1,74,12);
+  
+  setCursor(TABLE_SETUP,30);
+  //eraseLine();
+  print("-<");
+  printColor(VTBOLD,random(1,7),VTBLACK);
+  print(" CALLISTO "); //14
+  resetColor();
+  print(">-");
+  
   setCursor(TABLE_GRAPH+14,2);
+  eraseLine();
 	
   if(rms1.available()){
 	float rms = rms1.read();
@@ -348,13 +376,36 @@ void loop() {
 	analogWrite(LEDTRIG, rms * 255);
   }
   
+  setCursor(TABLE_GRAPH+14,26);
+  print("Reference ADC: ");
+  print(VINPUT);
+  print("V\t");
+  print(VINPUT/-0.33+5,2,1);
+  print("V\t");
+  print(EXPECTED);
+  
   println();
   
+  if(strlen(inString)>1){
+	print(">>> ");
+	print(inString);
+  }
+  
+  while(Serial.available()){
+	char inByte = Serial.read();
+	if(inByte == '\n'){
+		inString[0]='\0';
+	} else {
+		sprintf(inString, "%s%c", inString, inByte);
+	}
+  }
+  
+  setCursor(TABLE_GRAPH+16,26);
   print("Bring up firmware 1.0v by Tomash GHz");
   
   printWrite();
   
-  delay(2);
+  delay(10);
   
 }
 
@@ -455,12 +506,21 @@ void print(float num, int d, int s){
 	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
 }
 
+void eraseLine(){
+	int tLen = sprintf(msgTemp,"\033[2K");
+	if(strlen(msg) + tLen >= MSGMAX){
+		printWrite();
+	}
+	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+}
+
 void println(){
 	int tLen = sprintf(msgTemp,"\n\033[1C");
 	if(strlen(msg) + tLen >= MSGMAX){
 		printWrite();
 	}
 	msgLen += sprintf(msg, "%s%s", msg, msgTemp);
+	eraseLine();
 }
 
 void printWrite(){
