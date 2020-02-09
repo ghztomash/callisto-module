@@ -53,9 +53,9 @@
 #define CVF  A10
 #define POTF A11
 
-#define ADC_RESOLUTION 10
+#define ADC_RESOLUTION 13
 #define ADC_AVERAGING 1
-#define SAMPLES 50	// 5000
+#define SAMPLES 5000	// 5000
 
 // Audio Objects
 AudioSynthWaveformSine			osc1;
@@ -235,42 +235,60 @@ void loop() {
   //drawBox(TABLE_SETUP,1,74,4);
   //drawBox(TABLE_ADC,1,74,13);
   //drawBox(TABLE_GRAPH,1,74,12);
-  
-  tab=3;
-  setCursor(TABLE_ADC+1,tab);
-  printColor(VTBOLD,VTWHITE, VTBLACK);
-  print("PIN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("ADC");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("ADC V");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print(" VIN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("VAR");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("STD");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("AVG");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("PPN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("OFF");
+  if(!DRAWCSV){
+	  tab=3;
+	  setCursor(TABLE_ADC+1,tab);
+	  printColor(VTBOLD,VTWHITE, VTBLACK);
+	  print("PIN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC V");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print(" VIN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("VAR");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("STD");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("AVG");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("PPN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("OFF");
+  } else {
+	  tab=3;
+	  setCursor(TABLE_ADC+1,tab);
+	  resetColor();
+	  print("PIN, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("VAR, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("STD, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("AVG, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("PPN");
+  }
   //cursorForward(6);
   resetColor();
   println();
-  
-  // TODO MEAN AND STD
 
-  
   for (int i=0; i<12; i++ ){
 	  
 	  delay(5);
@@ -355,43 +373,37 @@ void loop() {
 		  print(":");
 		  
 		  drawRow(TABLE_GRAPH+1+i, 8,(adcVal[i]>>7), 219 );
-	  }
-	  
-	  
-	  if (DRAWCSV) {
-		  setCursor(TABLE_GRAPH+1+i,0);
+	  } else {
+		  tab=3;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  eraseLine();
 		  print("A");
 		  print(i);
 		  print(":, ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
 		  print(adcVal[i]);
 		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
 		  print((float)variance,1);
 		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
 		  print((float)stdev);
 		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
 		  print((float)datAvg,1);
 		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
 		  print((int)ppNoise);
 		  print("\n");
 	  }
   }
   
   //print CSV values
-  
-  if (DRAWCSV) {
-	  setCursor(TABLE_GRAPH,0);
-	  resetColor();
-	  print("PIN, ");
-	  print("ADC, ");
-	  print("ADC V, ");
-	  print("VIN, ");
-	  print("VAR, ");
-	  print("STD, ");
-	  print("AVG, ");
-	  print("PPN, ");
-	  print("OFF");
-	  println();
-  }
   
   //drawBox(TABLE_SETUP,1,74,4);
   //drawBox(TABLE_ADC,1,74,13);
