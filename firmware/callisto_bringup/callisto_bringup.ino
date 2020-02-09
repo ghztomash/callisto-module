@@ -19,6 +19,9 @@
 #define TABLE_SETUP 1
 #define TABLE_ADC 7
 #define TABLE_GRAPH 22
+#define TABLE_CSV 39
+
+#define DRAWCSV 1
 
 #define HIGHLOW(a) (a ? "\033[0;32;40m- HIGH -\033[0;37;40m" : "\033[0;31;40m- LOW -\033[0;37;40m")
 // ---------------------------------------------------
@@ -50,9 +53,9 @@
 #define CVF  A10
 #define POTF A11
 
-#define ADC_RESOLUTION 10
-#define ADC_AVERAGING 32
-#define SAMPLES 5000
+#define ADC_RESOLUTION 13
+#define ADC_AVERAGING 1
+#define SAMPLES 5000	// 5000
 
 // Audio Objects
 AudioSynthWaveformSine			osc1;
@@ -232,42 +235,60 @@ void loop() {
   //drawBox(TABLE_SETUP,1,74,4);
   //drawBox(TABLE_ADC,1,74,13);
   //drawBox(TABLE_GRAPH,1,74,12);
-  
-  tab=3;
-  setCursor(TABLE_ADC+1,tab);
-  printColor(VTBOLD,VTWHITE, VTBLACK);
-  print("PIN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("ADC");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("ADC V");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print(" VIN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("VAR");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("STD");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("AVG");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("PPN");
-  tab+=TAB_INCREMENT;
-  setCursor(TABLE_ADC+1,tab);
-  print("OFF");
+  if(!DRAWCSV){
+	  tab=3;
+	  setCursor(TABLE_ADC+1,tab);
+	  printColor(VTBOLD,VTWHITE, VTBLACK);
+	  print("PIN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC V");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print(" VIN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("VAR");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("STD");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("AVG");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("PPN");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("OFF");
+  } else {
+	  tab=3;
+	  setCursor(TABLE_ADC+1,tab);
+	  resetColor();
+	  print("PIN, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("ADC, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("VAR, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("STD, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("AVG, ");
+	  tab+=TAB_INCREMENT;
+	  setCursor(TABLE_ADC+1,tab);
+	  print("PPN");
+  }
   //cursorForward(6);
   resetColor();
   println();
-  
-  // TODO MEAN AND STD
 
-  
   for (int i=0; i<12; i++ ){
 	  
 	  delay(5);
@@ -309,50 +330,80 @@ void loop() {
 		printColor(VTNORMAL,VTYELLOW,VTBLACK);
 	  else
 		resetColor();
-	  
-	  tab=3;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  eraseLine();
-	  print("A");
-	  print(i);
-	  print(":");
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print(adcVal[i]);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((adcVal[i]/(float)MAXADC)*3.3, 3);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  if(i==0)
-		print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7, 3, 1);
-	  else if(i%2==0)
-		print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+5, 3, 1);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((float)variance,1);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((float)stdev);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((float)datAvg,1);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((int)ppNoise);
-	  tab+=TAB_INCREMENT;
-	  setCursor(TABLE_ADC+2+i, tab);
-	  print((int)sOffset);
-	  
-	  tab=3;
-	  setCursor(TABLE_GRAPH+1+i, tab);
-	  eraseLine();
-	  print("A");
-	  print(i);
-	  print(":");
-	  
-	  drawRow(TABLE_GRAPH+1+i, 8,(adcVal[i]>>7), 219 );
+	  if (!DRAWCSV) {
+		  tab=3;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  eraseLine();
+		  print("A");
+		  print(i);
+		  print(":");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print(adcVal[i]);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((adcVal[i]/(float)MAXADC)*3.3, 3);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  if(i==0)
+			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7, 3, 1);
+		  else if(i%2==0)
+			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+5, 3, 1);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)variance,1);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)stdev);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)datAvg,1);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((int)ppNoise);
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((int)sOffset);
+		  
+		  tab=3;
+		  setCursor(TABLE_GRAPH+1+i, tab);
+		  eraseLine();
+		  print("A");
+		  print(i);
+		  print(":");
+		  
+		  drawRow(TABLE_GRAPH+1+i, 8,(adcVal[i]>>7), 219 );
+	  } else {
+		  tab=3;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  eraseLine();
+		  print("A");
+		  print(i);
+		  print(":, ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print(adcVal[i]);
+		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)variance,1);
+		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)stdev);
+		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((float)datAvg,1);
+		  print(", ");
+		  tab+=TAB_INCREMENT;
+		  setCursor(TABLE_ADC+2+i, tab);
+		  print((int)ppNoise);
+		  print("\n");
+	  }
   }
+  
+  //print CSV values
   
   //drawBox(TABLE_SETUP,1,74,4);
   //drawBox(TABLE_ADC,1,74,13);
