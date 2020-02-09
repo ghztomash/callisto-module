@@ -21,7 +21,7 @@
 #define TABLE_GRAPH 22
 #define TABLE_CSV 39
 
-#define DRAWCSV 1
+#define DRAWCSV 0
 
 #define HIGHLOW(a) (a ? "\033[0;32;40m- HIGH -\033[0;37;40m" : "\033[0;31;40m- LOW -\033[0;37;40m")
 // ---------------------------------------------------
@@ -53,10 +53,6 @@
 #define CVF  A10
 #define POTF A11
 
-#define ADC_RESOLUTION 13
-#define ADC_AVERAGING 1
-#define SAMPLES 5000	// 5000
-
 // Audio Objects
 AudioSynthWaveformSine			osc1;
 AudioSynthWaveform				osc2;
@@ -77,10 +73,16 @@ bool lastModeButtonA = LOW;
 bool modeButtonB = LOW;
 bool lastModeButtonB = LOW;
 
-const int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
-const float VREF = 3.3;		// ADC reference voltage (= power supply)
+int ADC_RESOLUTION = 13;
+int ADC_AVERAGING = 4;
+int SAMPLES = 50;	// 5000
+
+int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
+float VREF = 3.3;		// ADC reference voltage (= power supply)
 float VINPUT = 1.65;	// ADC input voltage from Normalized Jack      
 int EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
+float VINPUTVOCT = 2.357;	// ADC input voltage from Normalized Jack 
+int EXPECTEDVOCT = MAXADC*(VINPUTVOCT/VREF);	// expected ADC reading
 
 int ledsPins[6] = {LEDA, LEDB, LEDC, LEDD, LEDE, LEDF};
 int ledsStates[6] = {0};
@@ -88,12 +90,12 @@ int trigLedState = 0;
 
 int adcPins[12] = {CVA, POTA, CVB, POTB, CVC, POTC, CVD, POTD, CVE, POTE, CVF, POTF};
 int adcVal[12] = {0};
+int adcCalibration[12] = {0}; // calibration table;
+int adcOffset[12] = {0}; // offset table;
 //uint32_t adcSum[12] = {0};
 
 float frequency[] = {100, 1000, 10000};
 float amplitude[] = {0.0, 0.5, 1.0};
-
-int calibration[] = {4279, 4266, 4244, 4256};
 
 const int MSGMAX = 8192;
 char msg[MSGMAX];
@@ -104,6 +106,18 @@ char inString[124];
 
 long oldT;
 long durT;
+
+enum CLI_COMMAND{
+	CLI_ERR,
+	CLI_REF,
+	CLI_AMP,
+	CLI_FREQ,
+	CLI_CAL,
+	CLI_SAVE,
+	CLI_SIZE,
+	CLI_BIT,
+	CLI_AVR
+};
 
 void setup() {
 
@@ -294,7 +308,7 @@ void loop() {
 	  delay(5);
 	  
 	  oldT = micros();
-	  adcVal[i] = analogRead(adcPins[i]);
+	  adcVal[i] = analogRead(adcPins[i]) - adcCalibration[i]; // callibration offset
 	  durT = micros() - oldT;
 	  
 	  long datSum = 0;  // reset our accumulated sum of input values to zero
@@ -310,7 +324,7 @@ void loop() {
 	  
 	  
 	  for (int j=0; j<SAMPLES; j++) {
-        x = analogRead(adcPins[i]);
+        x = analogRead(adcPins[i]) - adcCalibration[i]; // callibration offset
         datSum += x;
         if (x > sMax) sMax = x;
         if (x < sMin) sMin = x;
@@ -324,7 +338,15 @@ void loop() {
       stdev = sqrt(variance);  // Calculate standard deviation
 	  float datAvg = (1.0*datSum)/n;
 	  int ppNoise = sMax - sMin;
-	  int sOffset = datAvg - EXPECTED;
+	  
+	  int sOffset;
+	  
+	  if(i==0) // for 1v/oct input
+		sOffset = datAvg - EXPECTEDVOCT;
+	  else
+		sOffset = datAvg - EXPECTED;
+	
+	  adcOffset[i] = sOffset;
 	  
 	  if(i%2==0)
 		printColor(VTNORMAL,VTYELLOW,VTBLACK);
@@ -345,7 +367,7 @@ void loop() {
 		  print((adcVal[i]/(float)MAXADC)*3.3, 3);
 		  tab+=TAB_INCREMENT;
 		  setCursor(TABLE_ADC+2+i, tab);
-		  if(i==0)
+		  if(i==0) // for 1v/oct input
 			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7, 3, 1);
 		  else if(i%2==0)
 			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+5, 3, 1);
@@ -445,6 +467,7 @@ void loop() {
   while(Serial.available()){
 	char inByte = Serial.read();
 	if(inByte == '\n'){
+		parseCommand();
 		inString[0]='\0';
 	} else {
 		sprintf(inString, "%s%c", inString, inByte);
@@ -464,6 +487,125 @@ float linToExp(float index, float range){
   //convert linear values to exponential
   float ratio = pow(range, 1/(float)range);
   return pow(ratio,index);
+}
+
+void parseCommand(){
+	char * pch;
+	pch = strtok (inString," ,");
+	//println();
+	uint8_t command = CLI_COMMAND::CLI_ERR;
+	uint8_t arguments = 0;
+	
+	while (pch != NULL)
+	{
+		//print(pch);
+		
+		if (strncmp (pch,"ref",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_REF;
+		} else if (strncmp (pch,"amp",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_AMP;
+		} else if (strncmp (pch,"freq",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_FREQ;
+		} else if (strncmp (pch,"cal",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_CAL;
+		  // callibrate 
+		  for (int i=0; i<12; i++ ){
+			if(i%2==0){
+				adcCalibration[i] = adcOffset[i];
+			}
+		  }
+		}
+		else if (strncmp (pch,"save",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_SAVE;
+		} else if (strncmp (pch,"size",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_SIZE;
+		} else if (strncmp (pch,"bit",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_BIT;
+		} else if (strncmp (pch,"avr",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_AVR;
+		}
+		
+		if (arguments == 1){
+			if(command == CLI_COMMAND::CLI_REF){
+				float arg = atof(pch);
+				if (arg>12.0)
+					arg = 12.0;
+				if (arg<-12.0)
+					arg = -12.0;
+				
+				VINPUT = (arg*-0.33)+1.65;
+				EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
+				
+				VINPUTVOCT = (arg*-0.33)+2.357;
+				EXPECTEDVOCT = MAXADC*(VINPUTVOCT/VREF);	// expected ADC reading
+			} else if(command == CLI_COMMAND::CLI_AMP){
+				float arg = atof(pch);
+				if (arg>1.0)
+					arg = 1.0;
+				if (arg<0.0)
+					arg = 0.0;
+				
+				amplitude[currentModeA-3] = arg;
+				osc1.amplitude(amplitude[currentModeA-3]);
+			} else if(command == CLI_COMMAND::CLI_FREQ){
+				float arg = atof(pch);
+				if (arg>20000.0)
+					arg = 20000.0;
+				if (arg<1.0)
+					arg = 1.0;
+				
+				frequency[currentModeB] = arg;
+				osc1.frequency(frequency[currentModeB]);
+			} else if(command == CLI_COMMAND::CLI_SIZE){
+				float arg = atof(pch);
+				if (arg>5000.0)
+					arg = 5000.0;
+				if (arg<1.0)
+					arg = 1.0;
+				
+				SAMPLES = arg;
+			} else if(command == CLI_COMMAND::CLI_BIT){
+				float arg = atof(pch);
+				if (arg>13.0)
+					arg = 13.0;
+				if (arg<1.0)
+					arg = 1.0;
+				
+				ADC_RESOLUTION = arg;
+				MAXADC = (1 << ADC_RESOLUTION) - 1;
+				analogReadResolution(ADC_RESOLUTION);
+			} else if(command == CLI_COMMAND::CLI_AVR){
+				float arg = atof(pch);
+				if (arg>32.0)
+					arg = 32.0;
+				if (arg<1.0)
+					arg = 1.0;
+				
+				ADC_AVERAGING = arg;
+				analogReadAveraging(ADC_AVERAGING);
+			}
+		} 
+		
+		pch = strtok (NULL, " ,");
+		arguments++;
+	}
+	//println();
 }
 
 void printClear(){
