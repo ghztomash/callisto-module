@@ -1,4 +1,7 @@
 #include <Audio.h>
+#include <EEPROM.h>
+
+#define VERSION 1
 
 // -------------- VT100 Defines ----------------------
 #define VTBLACK 	0
@@ -74,7 +77,7 @@ bool modeButtonB = LOW;
 bool lastModeButtonB = LOW;
 
 int ADC_RESOLUTION = 13;
-int ADC_AVERAGING = 4;
+int ADC_AVERAGING = 8;
 int SAMPLES = 50;	// 5000
 
 int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
@@ -107,16 +110,24 @@ char inString[124];
 long oldT;
 long durT;
 
-enum CLI_COMMAND{
+enum CLI_COMMAND {
 	CLI_ERR,
 	CLI_REF,
 	CLI_AMP,
 	CLI_FREQ,
 	CLI_CAL,
 	CLI_SAVE,
+	CLI_LOAD,
 	CLI_SIZE,
 	CLI_BIT,
-	CLI_AVR
+	CLI_AVR,
+	CLI_RES
+};
+
+struct EepromData {
+	int config;
+	int version;
+	int calibration[12];
 };
 
 void setup() {
@@ -385,7 +396,8 @@ void loop() {
 		  print((int)ppNoise);
 		  tab+=TAB_INCREMENT;
 		  setCursor(TABLE_ADC+2+i, tab);
-		  print((int)sOffset);
+		  if(i%2==0)
+			print((int)sOffset);
 		  
 		  tab=3;
 		  setCursor(TABLE_GRAPH+1+i, tab);
@@ -527,6 +539,12 @@ void parseCommand(){
 		{
 		  print(" found\n");
 		  command = CLI_COMMAND::CLI_SAVE;
+		  saveEeprom();
+		} else if (strncmp (pch,"load",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_LOAD;
+		  loadEeprom();
 		} else if (strncmp (pch,"size",3) == 0)
 		{
 		  print(" found\n");
@@ -539,6 +557,14 @@ void parseCommand(){
 		{
 		  print(" found\n");
 		  command = CLI_COMMAND::CLI_AVR;
+		} else if (strncmp (pch,"res",3) == 0)
+		{
+		  print(" found\n");
+		  command = CLI_COMMAND::CLI_RES;
+		  
+		  for (int i=0; i<12; i++ ){
+				adcCalibration[i] = 0;
+		  }
 		}
 		
 		if (arguments == 1){
@@ -590,6 +616,11 @@ void parseCommand(){
 				ADC_RESOLUTION = arg;
 				MAXADC = (1 << ADC_RESOLUTION) - 1;
 				analogReadResolution(ADC_RESOLUTION);
+				
+				VINPUT = (arg*-0.33)+1.65;
+				EXPECTED = MAXADC*(VINPUT/VREF);	// expected ADC reading
+				VINPUTVOCT = (arg*-0.33)+2.357;
+				EXPECTEDVOCT = MAXADC*(VINPUTVOCT/VREF);
 			} else if(command == CLI_COMMAND::CLI_AVR){
 				float arg = atof(pch);
 				if (arg>32.0)
@@ -783,4 +814,30 @@ void drawBox(int x, int y, int w, int h){
 	drawRow(x+h+1, y, 1, 200);
 	drawRow(x, y+w+1, 1, 187);
 	drawRow(x+h+1, y+w+1, 1, 188);
+}
+
+void saveEeprom(){
+	int eeAddress = 0;
+	EepromData eedata = { 0xDEAD, VERSION, {0}};
+	
+	for (int i=0; i<12; i++ ){
+		eedata.calibration[i] = adcCalibration[i];
+	}
+	
+	EEPROM.put(eeAddress, eedata);
+}
+
+void loadEeprom(){
+	int eeAddress = 0;
+	EepromData eedata;
+	EEPROM.get(eeAddress, eedata);
+	
+	if(eedata.config == 0xDEAD){
+		print("eeprom data\n");
+		for (int i=0; i<12; i++ ){
+			adcCalibration[i] = eedata.calibration[i];
+		}
+	} else {
+		print("no data\n");
+	}
 }
