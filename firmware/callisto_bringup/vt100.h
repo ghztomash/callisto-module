@@ -17,8 +17,7 @@
 #define TAB_INCREMENT 8
 #define TABLE_SETUP 1
 #define TABLE_ADC 7
-#define TABLE_GRAPH 22
-#define TABLE_CSV 39
+#define TABLE_GRAPH 24
 
 #define DRAWCSV 0
 

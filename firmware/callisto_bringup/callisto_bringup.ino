@@ -285,6 +285,13 @@ void loop() {
   //cursorForward(6);
   resetColor();
   println();
+  
+	float maxVariance = 0;
+	float maxSTD = 0;
+	int maxPPN = 0;
+	float avrVariance = 0;
+	float avrSTD = 0;
+	int avrPPN = 0;
 
   for (int i=0; i<12; i++ ){
 	  
@@ -298,9 +305,8 @@ void loop() {
       int sMax = 0;
       int sMin = MAXADC;
       long n;            // count of how many readings so far
-      double x,mean,delta,sumsq,m2,variance,stdev;  // to calculate standard deviation
+      double x,mean,delta,m2,variance,stdev;  // to calculate standard deviation
 	  
-	  sumsq = 0; // initialize running squared sum of differences
       n = 0;     // have not made any ADC readings yet
       mean = 0; // start off with running mean at zero
       m2 = 0;
@@ -321,6 +327,16 @@ void loop() {
       stdev = sqrt(variance);  // Calculate standard deviation
 	  float datAvg = (1.0*datSum)/n;
 	  int ppNoise = sMax - sMin;
+	  
+	  if (ppNoise > maxPPN)
+		maxPPN = ppNoise;
+	  if ( stdev > maxSTD)
+		maxSTD = stdev;
+	  if (variance > maxVariance)
+		  maxVariance = variance;
+	  avrPPN += ppNoise;
+	  avrSTD +=stdev;
+	  avrVariance +=variance;
 	  
 	  int sOffset;
 	  
@@ -408,6 +424,34 @@ void loop() {
 		  print("\n");
 	  }
   }
+  
+  // print stats for all ADC pins
+  avrPPN /= 12;
+  avrSTD /= 12.0;
+  avrVariance /= 12.0;
+  
+  setCursor(TABLE_GRAPH-2, 3 + TAB_INCREMENT * 3);
+  eraseLine();
+  print("Avr:");
+  setCursor(TABLE_GRAPH-1, 3 + TAB_INCREMENT * 3);
+  eraseLine();
+  print("Max:");
+  printColor(VTNORMAL,VTCYAN,VTBLACK);
+  setCursor(TABLE_GRAPH-1, 3 + TAB_INCREMENT * 4);
+  print((float)maxVariance, 1);
+  setCursor(TABLE_GRAPH-1, 3 + TAB_INCREMENT * 5);
+  print((float)maxSTD);
+  setCursor(TABLE_GRAPH-1, 3 + TAB_INCREMENT * 7);
+  print(maxPPN);
+  
+  setCursor(TABLE_GRAPH-2, 3 + TAB_INCREMENT * 4);
+  print((float)avrVariance, 1);
+  setCursor(TABLE_GRAPH-2, 3 + TAB_INCREMENT * 5);
+  print((float)avrSTD);
+  setCursor(TABLE_GRAPH-2, 3 + TAB_INCREMENT * 7);
+  print(avrPPN);
+  
+  resetColor();
   
   //print CSV values
   
