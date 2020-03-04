@@ -1,5 +1,3 @@
-#include "helpers.h"
-
 const int MSGMAX = 8192;
 char msg[MSGMAX];
 char msgTemp[2048];
