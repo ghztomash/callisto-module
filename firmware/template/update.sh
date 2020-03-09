@@ -1,2 +1,2 @@
 #!/bin/bash
-cp ../template/callisto_core.h callisto_core.h
+cp ../template/callisto_hal.h callisto_hal.h
