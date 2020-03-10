@@ -8,37 +8,48 @@
 #define DEBUG 1
 
 // PIN defines
-#define LEDA 0
-#define LEDB 1
-#define LEDC 2
-#define LEDD 3
-#define LEDE 4
-#define LEDF 5
-#define LEDTRIG 10
+#define LEDA_PIN 0
+#define LEDB_PIN 1
+#define LEDC_PIN 2
+#define LEDD_PIN 3
+#define LEDE_PIN 4
+#define LEDF_PIN 5
+#define LEDTRIG_PIN 10
+#define SWITCHA_PIN 8
+#define SWITCHB_PIN 9
+#define TRIGIN_PIN 11
 
-#define SWITCHA 8
-#define SWITCHB 9
+#define CVA_PIN  A0
+#define POTA_PIN A1
+#define CVB_PIN  A2
+#define POTB_PIN A3
+#define CVC_PIN  A4
+#define POTC_PIN A5
+#define CVD_PIN  A6
+#define POTD_PIN A7
+#define CVE_PIN  A8
+#define POTE_PIN A9
+#define CVF_PIN  A10
+#define POTF_PIN A11
 
-#define TRIGIN 11
-
-#define CVA  A0
-#define POTA A1
-#define CVB  A2
-#define POTB A3
-#define CVC  A4
-#define POTC A5
-#define CVD  A6
-#define POTD A7
-#define CVE  A8
-#define POTE A9
-#define CVF  A10
-#define POTF A11
+#define CVA  0
+#define POTA 1
+#define CVB  2
+#define POTB 3
+#define CVC  4
+#define POTC 5
+#define CVD  6
+#define POTD 7
+#define CVE  8
+#define POTE 9
+#define CVF  10
+#define POTF 11
 
 #define ADC_RESOLUTION 13
 #define ADC_AVERAGING 8
 
-int adcPins[12] = {CVA, POTA, CVB, POTB, CVC, POTC, CVD, POTD, CVE, POTE, CVF, POTF};
-int ledsPins[6] = {LEDA, LEDB, LEDC, LEDD, LEDE, LEDF};
+int adcPins[12] = {CVA_PIN, POTA_PIN, CVB_PIN, POTB_PIN, CVC_PIN, POTC_PIN, CVD_PIN, POTD_PIN, CVE_PIN, POTE_PIN, CVF_PIN, POTF_PIN};
+int ledsPins[6] = {LEDA_PIN, LEDB_PIN, LEDC_PIN, LEDD_PIN, LEDE_PIN, LEDF_PIN};
 
 struct EepromData {
 	int config;
@@ -49,7 +60,6 @@ struct EepromData {
 class CallistoHAL{
 	public:
 		CallistoHAL();
-		void blink();
 		void introAnimation();
 		void update();
 		void updateADC();
@@ -63,17 +73,18 @@ class CallistoHAL{
 		float readPotNorm(int);
 		float readPotVolt(int);
 		float readPotPitch();
-		void setLED(int);
+		void setLED(int, bool);
 		void setTrigLED(int);
-		int readButton(int);
-		int readTrigger();
+		bool readButton(int);
+		bool readTrigger();
 		int getModeA();
 		int getModeB();
 		void setModeA(int);
 		void setModeB(int);
-		
 		void setModeACallback(void (*)(int));
 		void setModeBCallback(void (*)(int));
+		void setTriggerCallback(void (*)());
+		
 	private:
 		void saveCalibration();
 		void loadCallibration();
@@ -91,10 +102,10 @@ class CallistoHAL{
 		bool lastModeButtonA = LOW;
 		bool modeButtonB = LOW;
 		bool lastModeButtonB = LOW;
+		bool triggerState = LOW;
 		
 		void (*modeACallback)(int) = NULL;
 		void (*modeBCallback)(int) = NULL;
-		void (*triggerCallback)(int) = NULL;
 };
 
 CallistoHAL::CallistoHAL(){
@@ -103,10 +114,10 @@ CallistoHAL::CallistoHAL(){
 	for (int i=0; i<6; i++) {
 		pinMode(ledsPins[i], OUTPUT);
 	}
-	pinMode(LEDTRIG, OUTPUT);
-	pinMode(TRIGIN, INPUT_PULLUP);
-	pinMode(SWITCHA, INPUT_PULLUP);
-	pinMode(SWITCHB, INPUT_PULLUP);
+	pinMode(LEDTRIG_PIN, OUTPUT);
+	pinMode(TRIGIN_PIN, INPUT_PULLUP);
+	pinMode(SWITCHA_PIN, INPUT_PULLUP);
+	pinMode(SWITCHB_PIN, INPUT_PULLUP);
 	
 	//Setup ADC
 	analogReference(EXTERNAL);
@@ -121,13 +132,6 @@ CallistoHAL::CallistoHAL(){
 	ledsStates[currentModeB] = HIGH;
 }
 
-void CallistoHAL::blink(){
-	digitalWrite(LEDTRIG, HIGH);
-	delay(200);
-	digitalWrite(LEDTRIG, LOW);
-	delay(200);
-}
-
 void CallistoHAL::introAnimation(){
 	for (int i=0; i<6; i++) {
 		digitalWrite(ledsPins[i], HIGH);
@@ -137,7 +141,7 @@ void CallistoHAL::introAnimation(){
 		digitalWrite(ledsPins[i], LOW);
 		delay(100);
 	}
-	digitalWrite(LEDTRIG, HIGH);
+	digitalWrite(LEDTRIG_PIN, HIGH);
 	delay(100);
 }
 
@@ -154,12 +158,13 @@ void CallistoHAL::updateADC(){
 
 void CallistoHAL::updateUI(){
 	
-	tempButtonA = digitalRead(SWITCHA);
-	tempButtonB = digitalRead(SWITCHB);
+	tempButtonA = digitalRead(SWITCHA_PIN);
+	tempButtonB = digitalRead(SWITCHB_PIN);
+	triggerState = !digitalRead(TRIGIN_PIN); // invert logic becase of pullup
 	
 	if(tempButtonA != lastModeButtonA){
 		if(tempButtonA == LOW){
-			modeButtonA = HIGH;
+			modeButtonA = HIGH; // invert logic becase of pullup
 			ledsStates[currentModeA+3] = LOW;
 			currentModeA++;
 			if(currentModeA >= 3)
@@ -176,7 +181,7 @@ void CallistoHAL::updateUI(){
 	
 	if(tempButtonB != lastModeButtonB){
 		if(tempButtonB == LOW){
-			modeButtonB = HIGH;
+			modeButtonB = HIGH; // invert logic becase of pullup
 			ledsStates[currentModeB] = LOW;
 			currentModeB++;
 			if(currentModeB >= 3)
@@ -194,7 +199,7 @@ void CallistoHAL::updateUI(){
 	for (int i=0; i<6; i++) {
 		digitalWrite(ledsPins[i], ledsStates[i]);
 	}
-	analogWrite(LEDTRIG, trigLedState);
+	analogWrite(LEDTRIG_PIN, trigLedState);
 }
 
 void CallistoHAL::setModeACallback(void (*callback)(int)){ // assign pointer to call back function
@@ -205,6 +210,67 @@ void CallistoHAL::setModeACallback(void (*callback)(int)){ // assign pointer to 
 void CallistoHAL::setModeBCallback(void (*callback)(int)){ // assign pointer to call back function
 	if(callback!=NULL)
 		modeBCallback = callback;
+}
+
+void CallistoHAL::setTriggerCallback(void (*callback)()){ // assign trigger callback function
+	if(callback!=NULL)
+		attachInterrupt(TRIGIN_PIN, callback, FALLING);
+}
+
+void CallistoHAL::setTrigLED(int val){ // set PWM value for trigger LED
+	if (val<0)
+		val = 0;
+	if (val > 255)
+		val = 255; // depends on PWM resolutin!!!
+	trigLedState = val;
+}
+
+void CallistoHAL::setModeA(int mode){ // manually update mode
+	ledsStates[currentModeA+3] = LOW;
+	if(mode >= 3)
+		mode = 2;
+	if(mode < 0)
+		mode = 0;
+	currentModeA = mode;
+	ledsStates[currentModeA+3] = HIGH;
+	
+	if (modeACallback != NULL){
+		modeACallback(currentModeA); // call callback function
+	}
+}
+
+void CallistoHAL::setModeB(int mode){ // manually update mode
+	ledsStates[currentModeB] = LOW;
+	if(mode >= 3)
+		mode = 2;
+	if(mode < 0)
+		mode = 0;
+	currentModeB = mode;
+	ledsStates[currentModeB] = HIGH;
+	
+	if (modeBCallback != NULL){
+		modeBCallback(currentModeB); // call callback function
+	}
+}
+
+int CallistoHAL::getModeA(){ // return which mode A is in
+	return currentModeA;
+}
+
+int CallistoHAL::getModeB(){ // return which mode B is in
+	return currentModeB;
+}
+
+bool CallistoHAL::readButton(int button){ // return button state
+	if (button == 0)
+		return modeButtonA;
+	else if (button == 1)
+		return modeButtonB;
+	return 0;
+}
+
+bool CallistoHAL::readTrigger(){ // return trigger state
+	return triggerState;
 }
 
 void CallistoHAL::saveCalibration(){

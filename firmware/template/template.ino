@@ -4,10 +4,12 @@ CallistoHAL callisto;
 void setup(){
 	callisto.setModeACallback(modeAChanged);
 	callisto.setModeBCallback(modeBChanged);
+	callisto.setTriggerCallback(trigger);
 }
 
 void loop(){
 	callisto.update();
+	callisto.setTrigLED(255);
 }
 
 void modeAChanged(int mode){
@@ -18,4 +20,8 @@ void modeAChanged(int mode){
 void modeBChanged(int mode){
 	Serial.print("Mode B changed: ");
 	Serial.println(mode);
+}
+
+void trigger(){
+	Serial.println("Trigger!");
 }
