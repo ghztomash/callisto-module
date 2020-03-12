@@ -5,11 +5,17 @@ void setup(){
 	callisto.setModeACallback(modeAChanged);
 	callisto.setModeBCallback(modeBChanged);
 	callisto.setTriggerCallback(trigger);
+	callisto.setLED(cA,HIGH);
+	callisto.setLED(cE,HIGH);
 }
 
 void loop(){
 	callisto.update();
 	callisto.setTrigLED(255);
+	Serial.print(callisto.readCVNorm(cA));
+	Serial.print("\t ");
+	Serial.println(callisto.readCVRaw(cA));
+	delay(10);
 }
 
 void modeAChanged(int mode){

@@ -32,6 +32,7 @@
 #define CVF_PIN  A10
 #define POTF_PIN A11
 
+
 #define CVA  0
 #define POTA 1
 #define CVB  2
@@ -45,8 +46,16 @@
 #define CVF  10
 #define POTF 11
 
+#define cA 0
+#define cB 1
+#define cC 2
+#define cD 3
+#define cE 4
+#define cF 5
+
 #define ADC_RESOLUTION 13
 #define ADC_AVERAGING 8
+int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
 
 int adcPins[12] = {CVA_PIN, POTA_PIN, CVB_PIN, POTB_PIN, CVC_PIN, POTC_PIN, CVD_PIN, POTD_PIN, CVE_PIN, POTE_PIN, CVF_PIN, POTF_PIN};
 int ledsPins[6] = {LEDA_PIN, LEDB_PIN, LEDC_PIN, LEDD_PIN, LEDE_PIN, LEDF_PIN};
@@ -66,8 +75,8 @@ class CallistoHAL{
 		void updateUI();
 		int readADCRaw(int);
 		int readCVRaw(int);
-		float readCVnorm(int);
-		float readCVvolt(int);
+		float readCVNorm(int);
+		float readCVVolt(int);
 		float readCVPitch();
 		int readPotRaw(int);
 		float readPotNorm(int);
@@ -202,6 +211,48 @@ void CallistoHAL::updateUI(){
 	analogWrite(LEDTRIG_PIN, trigLedState);
 }
 
+int CallistoHAL::readADCRaw(int adc){
+	if (adc < 0)
+		adc = 0;
+	if (adc > 11)
+		adc = 11;
+	return adcVal[adc];
+}
+
+int CallistoHAL::readCVRaw(int adc){
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	return (MAXADC - adcVal[adc*2]); //invert value because of inverting opamp
+}
+
+float CallistoHAL::readCVNorm(int adc){ // read CV normalized from -1 to 1
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	if (adc == 0)
+		return (float)adcVal[adc*2]/MAXADC*-2.0+1.43; // 1v/oct input is a bit offset
+	return (float)adcVal[adc*2]/MAXADC*-2.0+1; // invert value because of inverting opamp
+}
+
+int CallistoHAL::readPotRaw(int adc){
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	return adcVal[adc*2+1];
+}
+
+float CallistoHAL::readPotNorm(int adc){ // read potentiometer normalized from 0 to 1
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	return (float)adcVal[adc*2+1]/MAXADC; //invert value because of inverting opamp
+}
+
 void CallistoHAL::setModeACallback(void (*callback)(int)){ // assign pointer to call back function
 	if(callback!=NULL)
 		modeACallback = callback;
@@ -217,8 +268,16 @@ void CallistoHAL::setTriggerCallback(void (*callback)()){ // assign trigger call
 		attachInterrupt(TRIGIN_PIN, callback, FALLING);
 }
 
+void CallistoHAL::setLED(int led, bool state){ // manually change LED state
+	if (led < 0)
+		led = 0;
+	if (led > 5)
+		led = 5;
+	ledsStates[led] = state;
+}
+
 void CallistoHAL::setTrigLED(int val){ // set PWM value for trigger LED
-	if (val<0)
+	if (val < 0)
 		val = 0;
 	if (val > 255)
 		val = 255; // depends on PWM resolutin!!!
