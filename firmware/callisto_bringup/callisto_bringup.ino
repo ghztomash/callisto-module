@@ -367,7 +367,7 @@ void loop() {
 		  tab+=TAB_INCREMENT;
 		  setCursor(TABLE_ADC+2+i, tab);
 		  if(i==0) // for 1v/oct input
-			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7, 3, 1);
+			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+7.14, 3, 1);
 		  else if(i%2==0)
 			print(((adcVal[i]/(float)MAXADC)*3.3)/-0.33+5, 3, 1);
 		  tab+=TAB_INCREMENT;
