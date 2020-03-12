@@ -46,12 +46,12 @@
 #define CVF  10
 #define POTF 11
 
-#define cA 0
-#define cB 1
-#define cC 2
-#define cD 3
-#define cE 4
-#define cF 5
+#define UI_A 0
+#define UI_B 1
+#define UI_C 2
+#define UI_D 3
+#define UI_E 4
+#define UI_F 5
 
 #define ADC_RESOLUTION 13
 #define ADC_AVERAGING 8
@@ -95,9 +95,12 @@ class CallistoHAL{
 		void setTriggerCallback(void (*)());
 		
 	private:
+		void blink();
+		void calibrate();
 		void saveCalibration();
 		void loadCallibration();
 		float linToExp(float,float);
+		void debug(const char*);
 		
 		int ledsStates[6] = {0};
 		int trigLedState = 0;
@@ -139,6 +142,11 @@ CallistoHAL::CallistoHAL(){
 	
 	ledsStates[currentModeA+3] = HIGH;
 	ledsStates[currentModeB] = HIGH;
+	
+	// boot callibration
+	if ((digitalRead(SWITCHA_PIN) == LOW) && (digitalRead(SWITCHB_PIN) == LOW)){
+		calibrate();
+	}
 }
 
 void CallistoHAL::introAnimation(){
@@ -152,6 +160,7 @@ void CallistoHAL::introAnimation(){
 	}
 	digitalWrite(LEDTRIG_PIN, HIGH);
 	delay(100);
+	
 }
 
 void CallistoHAL::update(){
@@ -227,14 +236,24 @@ int CallistoHAL::readCVRaw(int adc){
 	return (MAXADC - adcVal[adc*2]); //invert value because of inverting opamp
 }
 
-float CallistoHAL::readCVNorm(int adc){ // read CV normalized from -1 to 1
+float CallistoHAL::readCVNorm(int adc){ // read CV normalized from -1.0 to 1.0
 	if (adc < 0)
 		adc = 0;
 	if (adc > 5)
 		adc = 5;
 	if (adc == 0)
-		return (float)adcVal[adc*2]/MAXADC*-2.0+1.43; // 1v/oct input is a bit offset
+		return (float)adcVal[adc*2]/MAXADC*-2.0+1.43; // 1v/oct input is a bit offset in this case 5V is 1.0 but it can go up to 7V
 	return (float)adcVal[adc*2]/MAXADC*-2.0+1; // invert value because of inverting opamp
+}
+
+float CallistoHAL::readCVVolt(int adc){ // read CV Voltage
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	if (adc == 0)
+		return ((float)adcVal[adc*2]/(float)MAXADC*3.3)/-0.33+7.14; // 1v/oct input is a bit offset
+	return ((float)adcVal[adc*2]/(float)MAXADC*3.3)/-0.33+5; // invert value because of inverting opamp
 }
 
 int CallistoHAL::readPotRaw(int adc){
@@ -245,12 +264,20 @@ int CallistoHAL::readPotRaw(int adc){
 	return adcVal[adc*2+1];
 }
 
-float CallistoHAL::readPotNorm(int adc){ // read potentiometer normalized from 0 to 1
+float CallistoHAL::readPotNorm(int adc){ // read potentiometer normalized from 0 to 1.0
 	if (adc < 0)
 		adc = 0;
 	if (adc > 5)
 		adc = 5;
 	return (float)adcVal[adc*2+1]/MAXADC; //invert value because of inverting opamp
+}
+
+float CallistoHAL::readPotVolt(int adc){ // read potentiometer voltage
+	if (adc < 0)
+		adc = 0;
+	if (adc > 5)
+		adc = 5;
+	return (float)adcVal[adc*2+1]/(float)MAXADC*3.3; //invert value because of inverting opamp
 }
 
 void CallistoHAL::setModeACallback(void (*callback)(int)){ // assign pointer to call back function
@@ -332,6 +359,75 @@ bool CallistoHAL::readTrigger(){ // return trigger state
 	return triggerState;
 }
 
+void CallistoHAL::blink(){
+	for (int i=0; i<6; i++) {
+		digitalWrite(ledsPins[i], HIGH);
+	}
+	digitalWrite(LEDTRIG_PIN, HIGH);
+	delay(100);
+	for (int i=0; i<6; i++) {
+		digitalWrite(ledsPins[i], LOW);
+	}
+	digitalWrite(LEDTRIG_PIN, LOW);
+	delay(100);
+}
+
+void CallistoHAL::calibrate(){
+	debug("Calibration mode");
+	
+	for (int i=0; i<12; i++ ){
+		adcCalibration[i] = 0;
+	}
+	
+	int adcOffset[12] = {0}; // offset table;
+	int expected = MAXADC*(1.65/3.3);	// expected ADC reading
+	int expectedVoct = MAXADC*(2.357/3.3);	// expected ADC reading
+	
+	while(true){
+		blink();
+		if ((digitalRead(SWITCHA_PIN) == HIGH) && (digitalRead(SWITCHB_PIN) == HIGH)) {
+			debug("Run Calibration");
+			
+			delay(500);
+			for (int i=0; i<12; i++ ){
+				delay(5);	  
+				long datSum = 0;  // reset our accumulated sum of input values to zero
+				long n;            // count of how many readings so far
+				double x;  // to calculate standard deviation
+				int sOffset;
+				float datAvg;
+	  
+				n = 0;     // have not made any ADC readings yet
+				for (int j=0; j<5000; j++) {
+					x = analogRead(adcPins[i]); // callibration offset
+					datSum += x;
+					n++;
+				}
+				datAvg = (float)datSum/(float)n;
+
+				if(i==0) // for 1v/oct input
+					sOffset = datAvg - expectedVoct;
+				else
+					sOffset = datAvg - expected;
+
+				adcOffset[i] = sOffset;
+				
+			}
+			break;
+		}
+	}
+	delay(100);
+	
+	for (int i=0; i<12; i++ ){
+		adcCalibration[i] = adcOffset[i];
+	}
+	saveCalibration();
+	debug("Calibration Complete!");
+	delay(1000);
+	blink();
+	//_reboot_Teensyduino_();
+}
+
 void CallistoHAL::saveCalibration(){
 	int eeAddress = 0;
 	EepromData eedata = { 0xDEAD, VERSION, {0}};
@@ -349,16 +445,12 @@ void CallistoHAL::loadCallibration(){
 	EEPROM.get(eeAddress, eedata);
 	
 	if(eedata.config == 0xDEAD){
-		#ifdef DEBUG
-		Serial.println("Eeprom data loaded");
-		#endif
+		debug("Eeprom data loaded");
 		for (int i=0; i<12; i++ ){
 			adcCalibration[i] = eedata.calibration[i];
 		}
 	} else {
-		#ifdef DEBUG
-		Serial.println("No Eeprom data");
-		#endif
+		debug("No Eeprom data");
 	}
 }
 
@@ -368,5 +460,10 @@ float CallistoHAL::linToExp(float index, float range){
   return pow(ratio,index);
 }
 
+void CallistoHAL::debug(const char str[]){
+	#ifdef DEBUG
+		Serial.println(str);
+	#endif
+}
 
 #endif

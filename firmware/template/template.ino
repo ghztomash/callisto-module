@@ -5,17 +5,17 @@ void setup(){
 	callisto.setModeACallback(modeAChanged);
 	callisto.setModeBCallback(modeBChanged);
 	callisto.setTriggerCallback(trigger);
-	callisto.setLED(cA,HIGH);
-	callisto.setLED(cE,HIGH);
+	callisto.setLED(UI_A,HIGH);
+	callisto.setLED(UI_E,HIGH);
 }
 
 void loop(){
 	callisto.update();
 	callisto.setTrigLED(255);
-	Serial.print(callisto.readCVNorm(cA));
-	Serial.print("\t ");
-	Serial.println(callisto.readCVRaw(cA));
-	delay(10);
+	//Serial.print(callisto.readCVVolt(UI_A));
+	//Serial.print("\t ");
+	//Serial.println(callisto.readCVNorm(UI_A));
+	//delay(10);
 }
 
 void modeAChanged(int mode){
@@ -26,6 +26,10 @@ void modeAChanged(int mode){
 void modeBChanged(int mode){
 	Serial.print("Mode B changed: ");
 	Serial.println(mode);
+	
+	Serial.print(callisto.readCVVolt(UI_A));
+	Serial.print("\t ");
+	Serial.println(callisto.readCVNorm(UI_A));
 }
 
 void trigger(){
