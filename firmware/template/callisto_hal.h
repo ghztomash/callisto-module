@@ -53,8 +53,10 @@
 #define UI_E 4
 #define UI_F 5
 
-#define ADC_RESOLUTION 13
-#define ADC_AVERAGING 8
+#define FREQ_MID_C 261.625565
+
+#define ADC_RESOLUTION 12
+#define ADC_AVERAGING 1
 int MAXADC = (1 << ADC_RESOLUTION) - 1;	// maximum possible reading from ADC
 
 int adcPins[12] = {CVA_PIN, POTA_PIN, CVB_PIN, POTB_PIN, CVC_PIN, POTC_PIN, CVD_PIN, POTD_PIN, CVE_PIN, POTE_PIN, CVF_PIN, POTF_PIN};
@@ -82,6 +84,7 @@ class CallistoHAL{
 		float readPotNorm(int);
 		float readPotVolt(int);
 		float readPotPitch();
+		float readPitch();
 		void setLED(int, bool);
 		void setTrigLED(int);
 		bool readButton(int);
@@ -135,6 +138,10 @@ CallistoHAL::CallistoHAL(){
 	analogReference(EXTERNAL);
 	analogReadResolution(ADC_RESOLUTION);
 	analogReadAveraging(ADC_AVERAGING);
+	
+	//setup PWM for LED
+	analogWriteResolution(8);
+	analogWriteFrequency(LEDTRIG_PIN, 187500);
 	
 	loadCallibration();
 	
@@ -246,6 +253,10 @@ float CallistoHAL::readCVNorm(int adc){ // read CV normalized from -1.0 to 1.0
 	return (float)adcVal[adc*2]/MAXADC*-2.0+1; // invert value because of inverting opamp
 }
 
+float CallistoHAL::readCVPitch(){ // convert 1v/oct input to frequency
+	return FREQ_MID_C * pow(2.0, readCVVolt(UI_A)-1.0);
+}
+
 float CallistoHAL::readCVVolt(int adc){ // read CV Voltage
 	if (adc < 0)
 		adc = 0;
@@ -279,6 +290,15 @@ float CallistoHAL::readPotVolt(int adc){ // read potentiometer voltage
 		adc = 5;
 	return (float)adcVal[adc*2+1]/(float)MAXADC*3.3; //invert value because of inverting opamp
 }
+
+float CallistoHAL::readPotPitch(){ // convert Potentiometer input to frequency
+	return FREQ_MID_C * pow(2.0, readPotNorm(UI_C)*2.0-3.0);
+}
+
+float CallistoHAL::readPitch(){ // convert 1v/oct + Potentiometer input to frequency
+	return FREQ_MID_C * pow(2.0, readCVVolt(UI_A)-1.0 + readPotNorm(UI_C)*2.0-3.0);
+}
+
 
 void CallistoHAL::setModeACallback(void (*callback)(int)){ // assign pointer to call back function
 	if(callback!=NULL)
@@ -419,7 +439,9 @@ void CallistoHAL::calibrate(){
 	delay(100);
 	
 	for (int i=0; i<12; i++ ){
-		adcCalibration[i] = adcOffset[i];
+		if(i%2==0){
+			adcCalibration[i] = adcOffset[i];
+		}
 	}
 	saveCalibration();
 	debug("Calibration Complete!");
