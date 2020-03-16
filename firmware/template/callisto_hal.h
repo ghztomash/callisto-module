@@ -32,7 +32,7 @@
 #define CVF_PIN  A10
 #define POTF_PIN A11
 
-
+// Array Defines
 #define CVA  0
 #define POTA 1
 #define CVB  2
@@ -46,6 +46,7 @@
 #define CVF  10
 #define POTF 11
 
+// UI Defines
 #define UI_A 0
 #define UI_B 1
 #define UI_C 2
@@ -71,10 +72,10 @@ struct EepromData {
 class CallistoHAL{
 	public:
 		CallistoHAL();
-		void introAnimation();
 		void update();
 		void updateADC();
-		void updateUI();
+		void updateButtons();
+		void updateLEDs();
 		int readADCRaw(int);
 		int readCVRaw(int);
 		float readCVNorm(int);
@@ -89,8 +90,7 @@ class CallistoHAL{
 		void setTrigLED(int);
 		bool readButton(int);
 		bool readTrigger();
-		int getModeA();
-		int getModeB();
+		int getMode(int);
 		void setModeA(int);
 		void setModeB(int);
 		void setModeACallback(void (*)(int));
@@ -98,6 +98,7 @@ class CallistoHAL{
 		void setTriggerCallback(void (*)());
 		
 	private:
+		void introAnimation();
 		void blink();
 		void calibrate();
 		void saveCalibration();
@@ -172,7 +173,8 @@ void CallistoHAL::introAnimation(){
 
 void CallistoHAL::update(){
 	updateADC();
-	updateUI();
+	updateButtons();
+	updateLEDs();
 }
 
 void CallistoHAL::updateADC(){
@@ -181,7 +183,7 @@ void CallistoHAL::updateADC(){
 	}
 }
 
-void CallistoHAL::updateUI(){
+void CallistoHAL::updateButtons(){
 	
 	tempButtonA = digitalRead(SWITCHA_PIN);
 	tempButtonB = digitalRead(SWITCHB_PIN);
@@ -220,7 +222,9 @@ void CallistoHAL::updateUI(){
 		}
 		lastModeButtonB = tempButtonB;
 	}
-	
+}
+
+void CallistoHAL::updateLEDs(){ // update LEDs to their new values
 	for (int i=0; i<6; i++) {
 		digitalWrite(ledsPins[i], ledsStates[i]);
 	}
@@ -359,12 +363,12 @@ void CallistoHAL::setModeB(int mode){ // manually update mode
 	}
 }
 
-int CallistoHAL::getModeA(){ // return which mode A is in
-	return currentModeA;
-}
-
-int CallistoHAL::getModeB(){ // return which mode B is in
-	return currentModeB;
+int CallistoHAL::getMode(int mode){ // return which mode A / B is in
+	if (mode == 0)
+		return currentModeA;
+	if (mode == 1)
+		return currentModeB;
+	return -1;
 }
 
 bool CallistoHAL::readButton(int button){ // return button state
@@ -372,7 +376,7 @@ bool CallistoHAL::readButton(int button){ // return button state
 		return modeButtonA;
 	else if (button == 1)
 		return modeButtonB;
-	return 0;
+	return -1;
 }
 
 bool CallistoHAL::readTrigger(){ // return trigger state
@@ -392,7 +396,7 @@ void CallistoHAL::blink(){
 	delay(100);
 }
 
-void CallistoHAL::calibrate(){
+void CallistoHAL::calibrate(){ // callibrate ADC input offset. Disconnect any CV inputs before running.
 	debug("Calibration mode");
 	
 	for (int i=0; i<12; i++ ){
@@ -411,24 +415,19 @@ void CallistoHAL::calibrate(){
 			delay(500);
 			for (int i=0; i<12; i++ ){
 				delay(5);	  
-				long datSum = 0;  // reset our accumulated sum of input values to zero
-				long n;            // count of how many readings so far
-				double x;  // to calculate standard deviation
-				int sOffset;
-				float datAvg;
+				long sum = 0;
+				int offset;
+				float average;
 	  
-				n = 0;     // have not made any ADC readings yet
 				for (int j=0; j<5000; j++) {
-					x = analogRead(adcPins[i]); // callibration offset
-					datSum += x;
-					n++;
+					sum += analogRead(adcPins[i]); // callibration offset
 				}
-				datAvg = (float)datSum/(float)n;
+				average = (float)sum/(float)5000;
 
 				if(i==0) // for 1v/oct input
-					sOffset = datAvg - expectedVoct;
+					offset = average - expectedVoct;
 				else
-					sOffset = datAvg - expected;
+					offset = average - expected;
 
 				adcOffset[i] = sOffset;
 				
@@ -447,7 +446,7 @@ void CallistoHAL::calibrate(){
 	debug("Calibration Complete!");
 	delay(1000);
 	blink();
-	//_reboot_Teensyduino_();
+	//_reboot_Teensyduino_(); // Doesn't work if module is not connected through USB
 }
 
 void CallistoHAL::saveCalibration(){
