@@ -23,27 +23,23 @@ This function updates the button states and updates the corresponding modes, it 
 ``` c
 void updateLEDs()
 ```
-This function updates the LEDs to their new values. LEDs are either automatically set by the current mode, or by manually calling `setLED()` or `setTrigLED`.
+This function updates the LEDs to their new values. LEDs are either automatically updated from their current mode, or by manually calling `setLED()` or `setTrigLED`.
 
 ``` c
-int readADCRaw(int input)
+int readADCRaw(int)
 ```
-Returns the raw ADC reading for a given input. Inputs are defined as CVA, POTA, CVB, POTB, etc up to CVF and POTF. Or 0 to 11.
 
 ``` c
 int readCVRaw(int)
 ```
-Returns the raw ADC reading for a CV input.
 
 ``` c
 float readCVNorm(int)
 ```
-Returns a normalized (from -1.0 to 1.0) ADC reading for a given CV input.
 
 ``` c
 float readCVVolt(int)
 ```
-Returns the input voltage for a given CV input. -3.0 V to +7.0 V for CV A and -5.0 V to +5.0 V for the rest CV inputs.
 
 ``` c
 float readCVPitch()
@@ -70,6 +66,14 @@ float readPitch()
 ```
 
 ``` c
+void setPitchCVSource(int);
+```
+
+``` c
+void setPitchPotSource(int);
+```
+
+``` c
 void setLED(int, bool)
 ```
 
@@ -86,27 +90,23 @@ bool readTrigger()
 ```
 
 ``` c
-int getModeA()
+int getMode(int)
 ```
 
 ``` c
-int getModeB()
+void setMode(int, int)
 ```
 
 ``` c
-void setModeA(int)
+void setAutoModeSwitch(bool);
 ```
 
 ``` c
-void setModeB(int)
+void setModeCallback(int, void (*)(int))
 ```
 
 ``` c
-void setModeACallback(void (*)(int))
-```
-
-``` c
-void setModeBCallback(void (*)(int))
+void setButtonCallback(int, void (*)());
 ```
 
 ``` c

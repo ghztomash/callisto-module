@@ -11,18 +11,18 @@ AudioConnection					patchCordout(osc1, 0, out1, 0);
 
 CallistoHAL callisto;
 
-float amplitude[] = {0.0, 0.5, 0.9};
+float amplitude[] = {0.9, 0.5, 0.0};
 
 void setup(){
-	callisto.setModeACallback(modeAChanged);
-	callisto.setModeBCallback(modeBChanged);
+	callisto.setModeCallback(MODE_A, modeAChanged);
+	callisto.setModeCallback(MODE_B, modeBChanged);
+	callisto.setButtonCallback(MODE_A, buttonA);
+	callisto.setButtonCallback(MODE_B, buttonB);
 	callisto.setTriggerCallback(trigger);
-	callisto.setLED(UI_A,HIGH);
-	callisto.setLED(UI_E,HIGH);
 	
 	AudioMemory(64);
 	osc1.frequency(440);
-	osc1.amplitude(0.0);
+	osc1.amplitude(0.9);
 	osc2.begin(1.0, 0.25, WAVEFORM_SINE);
 }
 
@@ -30,19 +30,8 @@ void loop(){
 	callisto.update();
 	
 	AudioNoInterrupts();
-	//osc1.frequency(callisto.readPotPitch());
-	//osc1.frequency(callisto.readCVPitch());
 	osc1.frequency(callisto.readPitch());
 	AudioInterrupts();
-	
-	/*
-	Serial.print(callisto.readPotPitch());
-	Serial.print("\t ");
-	Serial.print(callisto.readPotVolt(UI_C));
-	Serial.print("\t ");
-	Serial.println(callisto.readPotNorm(UI_C));
-	delay(10);
-	*/
 	
 	if(rms1.available()){
 		float rms = rms1.read();
@@ -59,10 +48,14 @@ void modeAChanged(int mode){
 void modeBChanged(int mode){
 	Serial.print("Mode B changed: ");
 	Serial.println(mode);
-	
-	Serial.print(callisto.readCVVolt(UI_A));
-	Serial.print("\t ");
-	Serial.println(callisto.readCVNorm(UI_A));
+}
+
+void buttonA(){
+	Serial.println("Button A pressed.");
+}
+
+void buttonB(){
+	Serial.println("Button B pressed.");
 }
 
 void trigger(){
