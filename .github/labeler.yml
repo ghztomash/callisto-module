@@ -1,5 +1,5 @@
-documentation:
-        - *.md
+docs:
+        - ./**/*.md
 
 repo:
         - ./*
