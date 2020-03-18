@@ -34,8 +34,8 @@
 // Audio Objects
 AudioSynthWaveformSine			osc1;
 AudioSynthWaveform				osc2;
-AudioAnalyzeRMS						rms1;
-AudioOutputAnalog 				out1;
+AudioAnalyzeRMS					rms1;
+AudioOutputAnalog				out1;
 AudioConnection					patchCordrms(osc2, 0, rms1, 0);
 AudioConnection					patchCordout(osc1, 0, out1, 0);
 
