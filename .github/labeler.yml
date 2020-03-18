@@ -1,0 +1,14 @@
+documentation:
+        - *.md
+
+repo:
+        - ./*
+
+bring-up:
+        - firmware/callisto_bringup/*
+
+template:
+        - firmware/template/*
+
+hardware:
+        - hardware/*
