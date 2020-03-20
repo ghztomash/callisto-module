@@ -128,6 +128,7 @@ class CallistoHAL{
 		void setModeCallback(int,void (*)(int));
 		void setButtonCallback(int, void (*)());
 		void setTriggerCallback(void (*)());
+		void setTriggerChangeCallback(void (*)());
 		
 	private:
 		void introAnimation();
@@ -355,6 +356,12 @@ void CallistoHAL::setTriggerCallback(void (*callback)()){ // assign trigger call
 	if(callback==NULL)
 		return;
 	attachInterrupt(TRIGIN_PIN, callback, FALLING);
+}
+
+void CallistoHAL::setTriggerChangeCallback(void (*callback)()){ // assign trigger off callback function
+	if(callback==NULL)
+		return;
+	attachInterrupt(TRIGIN_PIN, callback, CHANGE);
 }
 
 void CallistoHAL::setButtonCallback(int button, void (*callback)()){ // assign trigger callback function 

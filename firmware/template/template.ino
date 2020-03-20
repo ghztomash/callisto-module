@@ -1,4 +1,4 @@
-/* Callisto Eurorack Module - Firmware Template
+/* Callisto Eurorack Module - Template Firmware
  * Copyright (c) 2019 Tomash Ghz
  *
  * Please support GHz Labs and open-source hardware by purchasing
@@ -88,3 +88,5 @@ void buttonB(){
 void trigger(){
 	Serial.println("Trigger!");
 }
+
+// TODO Add HAL function prototypes here for reference.
