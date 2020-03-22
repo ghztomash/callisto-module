@@ -31,21 +31,35 @@
 // Audio Objects
 AudioSynthWaveformModulated		osc1; // main oscillator
 AudioEffectEnvelope				vca1; // main oscilator envelope
+AudioSynthWaveformDc			dc1;
+AudioSynthWaveformModulated		lfo1;
+AudioEffectEnvelope				eg1;
+AudioMixer4						modmix1;
 AudioAnalyzeRMS					rms1; // RMS analyzer for LED indicator
 AudioMixer4						mix1;
 AudioMixer4						mixMaster; // master mixer
+AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
 AudioOutputAnalog				out1;
 
 // Audio Object connections
 AudioConnection					patchCordOsc1(osc1, 0, vca1, 0); // osc1 -> vca1
+AudioConnection					patchCordfm(dc1, 0, modmix1, 0);
+AudioConnection					patchCordfm1(lfo1, 0, modmix1, 1);
+AudioConnection					patchCordfm2(modmix1, 0, eg1, 0);
+AudioConnection					patchCordfm3(eg1, 0, osc1, 0);
 AudioConnection					patchCord4(vca1, 0, mix1, 0);
 AudioConnection					patchCord6(mix1, 0, mixMaster, 0);
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
-AudioConnection					patchCordout(mixMaster, 0, out1, 0);
+AudioConnection					patchCordinv(mixMaster, 0, inverter, 0);
+AudioConnection					patchCordout(inverter, 0, out1, 0);
 
 CallistoHAL callisto;
 
+float frequency = 30;
 float decay = 40;
+float depth = 0;
+float width = 0;
+float frequencyHarmonics = 30;
 
 void setup(){
 	callisto.setModeCallback(MODE_A, modeAChanged);
@@ -54,29 +68,53 @@ void setup(){
 	callisto.setTriggerChangeCallback(triggerChange);
 	
 	AudioMemory(64);
+	dc1.amplitude(0.5);
 	osc1.begin(WAVEFORM_SINE);
 	osc1.frequency(40);
 	osc1.amplitude(1.0);
 	osc1.frequencyModulation(0);
 	
+	lfo1.begin(WAVEFORM_SINE);
+	lfo1.frequency(30);
+	lfo1.amplitude(0.9);
+	
+	modmix1.gain(0,1.0);
+	modmix1.gain(1,0.0);
+	
 	vca1.attack(0);
 	vca1.sustain(0.6);
 	vca1.delay(0);
 	vca1.hold(0);
+	vca1.release(100.0);
+	vca1.decay(100.0);
+	
+	eg1.delay(0);
+	eg1.hold(0);
+	eg1.attack(0);
+	eg1.sustain(0);
+	eg1.decay(40);
 	
 	mix1.gain(0, 1.0);
-	mixMaster.gain(0, 0.9);
+	mixMaster.gain(0, 1.0);
+	inverter.gain(-0.9); // invert and reduce gain to avoid clipping on output opamp.
 }
 
 void loop(){
 	callisto.update();
 	
-	decay = callisto.readPotNorm(UI_D)*1000.0;
+	decay = max(callisto.readPotNorm(UI_D) * 1000.0, 10.0);
+	width = callisto.readPotNorm(UI_A) * decay;
+	depth = callisto.readPotNorm(UI_F) * 4.0;
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	vca1.release(decay);
 	vca1.decay(decay);
+	osc1.frequencyModulation(depth);
+	
+	eg1.release(width);
+	eg1.decay(width);
+  
 	AudioInterrupts();
 	
 	if(rms1.available()){
@@ -107,9 +145,13 @@ void triggerChange(){
 	bool triggerState = !digitalReadFast(TRIGIN_PIN); // override any library calls for faster response TODO compare response time
 	
 	if(triggerState == HIGH){
+		osc1.sync();
 		vca1.noteOn();
+		eg1.noteOn();
+		//Serial.println(decay);
 	} else {
 		vca1.noteOff();
+		eg1.noteOff();
 	}
 	
 }
