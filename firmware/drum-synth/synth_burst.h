@@ -41,7 +41,7 @@ public:
 		cycles_count = 0;
 		phase_accumulator = 0;
 		lastMagnitude = 1;
-		number_of_cycles = 8;
+		number_of_cycles = 2;
 		running = 1;
 	}
 	void begin(float t_amp, float t_freq) {
@@ -50,7 +50,7 @@ public:
 		cycles_count = 0;
 		phase_accumulator = 0;
 		lastMagnitude = 1;
-		number_of_cycles = 8;
+		number_of_cycles = 2;
 		running = 1;
 	}
 	void begin(float t_amp, float t_freq, uint8_t t_count) {
