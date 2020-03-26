@@ -27,26 +27,32 @@
 
 #include <Audio.h>
 #include "callisto_hal.h"
+#include "envelope_ar.h"
 
 // Audio Objects
 AudioSynthWaveformModulated		osc1; // main oscillator
-AudioEffectEnvelope				vca1; // main oscilator envelope
+AudioEnvelopeAR					envelope1;
+AudioEffectMultiply				vca1; // main oscilator envelope
 AudioSynthWaveformDc			dc1;
 AudioSynthWaveformModulated		lfo1;
-AudioEffectEnvelope				eg1;
+AudioEnvelopeAR					eg1;
+AudioEffectMultiply				vca2;
 AudioMixer4						modmix1;
 AudioAnalyzeRMS					rms1; // RMS analyzer for LED indicator
 AudioMixer4						mix1;
 AudioMixer4						mixMaster; // master mixer
 AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
+
 AudioOutputAnalog				out1;
 
 // Audio Object connections
 AudioConnection					patchCordOsc1(osc1, 0, vca1, 0); // osc1 -> vca1
+AudioConnection					patchCordVCA1(envelope1, 0, vca1, 1); // env1 -> vca1
 AudioConnection					patchCordfm(dc1, 0, modmix1, 0);
 AudioConnection					patchCordfm1(lfo1, 0, modmix1, 1);
-AudioConnection					patchCordfm2(modmix1, 0, eg1, 0);
-AudioConnection					patchCordfm3(eg1, 0, osc1, 0);
+AudioConnection					patchCordfm2(modmix1, 0, vca2, 0);
+AudioConnection					patchCordfm4(eg1, 0, vca2, 1);
+AudioConnection					patchCordfm3(vca2, 0, osc1, 0);
 AudioConnection					patchCord4(vca1, 0, mix1, 0);
 AudioConnection					patchCord6(mix1, 0, mixMaster, 0);
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
@@ -60,6 +66,8 @@ float decay = 40;
 float depth = 0;
 float width = 0;
 float frequencyHarmonics = 30;
+
+uint32_t lastTrigger = 0;
 
 void setup(){
 	callisto.setModeCallback(MODE_A, modeAChanged);
@@ -81,18 +89,15 @@ void setup(){
 	modmix1.gain(0,1.0);
 	modmix1.gain(1,0.0);
 	
-	vca1.attack(0);
-	vca1.sustain(0.6);
-	vca1.delay(0);
-	vca1.hold(0);
-	vca1.release(100.0);
-	vca1.decay(100.0);
+	//eg1.delay(0);
+	//eg1.hold(0);
+	//eg1.attack(0);
+	//eg1.sustain(0);
+	//eg1.decay(40);
+	eg1.begin();
 	
-	eg1.delay(0);
-	eg1.hold(0);
-	eg1.attack(0);
-	eg1.sustain(0);
-	eg1.decay(40);
+	envelope1.begin();
+	envelope1.attack(100);
 	
 	mix1.gain(0, 1.0);
 	mixMaster.gain(0, 1.0);
@@ -100,6 +105,11 @@ void setup(){
 }
 
 void loop(){
+	
+	if(millis() - lastTrigger > 5){
+		eg1.noteOff();
+	}
+	
 	callisto.update();
 	
 	decay = max(callisto.readPotNorm(UI_D) * 1000.0, 10.0);
@@ -108,12 +118,13 @@ void loop(){
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
-	vca1.release(decay);
-	vca1.decay(decay);
+	//vca1.release(decay);
+	//vca1.decay(decay);
+	envelope1.attack(decay);
 	osc1.frequencyModulation(depth);
 	
-	eg1.release(width);
-	eg1.decay(width);
+	eg1.attack(width);
+	//eg1.decay(width);
   
 	AudioInterrupts();
 	
@@ -146,12 +157,15 @@ void triggerChange(){
 	
 	if(triggerState == HIGH){
 		osc1.sync();
-		vca1.noteOn();
+		//vca1.noteOn();
 		eg1.noteOn();
+		envelope1.noteOn();
+		lastTrigger = millis();
 		//Serial.println(decay);
 	} else {
-		vca1.noteOff();
+		//vca1.noteOff();
 		eg1.noteOff();
+		envelope1.noteOff();
 	}
 	
 }
