@@ -15,24 +15,24 @@ public:
 		running(0), a(0), xn(0), yn1(0) {
 	}
 
-	void attack(float millis) {
+	void attackTime(float millis) {
+		millis /= 1000.0;
+		float tau = millis * (1.0 - 2.0/3.0);
+		//a = tau / (tau + 1.0 / AUDIO_SAMPLE_RATE_EXACT) * INT32_MAX;
+		attackT = tau / (tau + 1.0 / AUDIO_SAMPLE_RATE_EXACT) * INT32_MAX;
+	}
+	
+	void releaseTime(float millis) {
 		millis /= 1000.0;
 		float tau = millis * (1.0 - 2.0/3.0);
 		//a = tau / (tau + 1.0 / AUDIO_SAMPLE_RATE_EXACT) * INT32_MAX;
 		releaseT = tau / (tau + 1.0 / AUDIO_SAMPLE_RATE_EXACT) * INT32_MAX;
 	}
 	
-	void releaset(float millis) {
-		millis /= 1000.0;
-		float tau = millis * (1.0 - 2.0/3.0);
-		//a = tau / (tau + 1.0 / AUDIO_SAMPLE_RATE_EXACT) * INT32_MAX;
-		releaseT = a;
-	}
-	
 	void noteOn() {
 		xn = INT32_MAX;
 		running = 1;
-		a = 0;
+		a = attackT;
 	}
 	
 	void noteOff() {
@@ -45,6 +45,8 @@ public:
 		a = 0;
 		xn = 0;
 		yn1 = 0;
+		attackTime(0.0);
+		releaseTime(0.0);
 		running = 1;
 	}
 

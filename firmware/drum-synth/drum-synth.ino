@@ -87,8 +87,9 @@ CallistoHAL callisto;
 
 float frequency = 30;
 float decay = 40;
+float sourceMix = 0;
 float depth = 0;
-float width = 0;
+float rate = 0;
 float click = 0;
 float noise = 0;
 float frequencyHarmonics = 30;
@@ -106,32 +107,28 @@ void setup(){
 	osc1.begin(WAVEFORM_SINE);
 	osc1.frequency(40);
 	osc1.amplitude(1.0);
-	osc1.frequencyModulation(0);
+	osc1.frequencyModulation(4.0);
 	
 	lfo1.begin(WAVEFORM_SINE);
 	lfo1.frequency(30);
-	lfo1.amplitude(0.9);
+	lfo1.amplitude(0.25);
+	lfo1.offset(0.25);
 	vcf1.frequency(60);
-	vcf1.octaveControl(0);
+	vcf1.octaveControl(4.0);
 	
 	modmix1.gain(0,1.0);
-	modmix1.gain(1,0.0);
+	modmix1.gain(1,1.0);
 	
 	impulse1.frequency(10000);
 	impulse1.amplitude(0.5);
 	
-	//eg1.delay(0);
-	//eg1.hold(0);
-	//eg1.attack(0);
-	//eg1.sustain(0);
-	//eg1.decay(40);
 	eg1.begin();
 	
 	envelope1.begin();
-	envelope1.attack(100);
+	envelope1.releaseTime(100);
 	
 	eg_noise1.begin();
-	eg_noise1.attack(100);
+	eg_noise1.releaseTime(100);
 	vcf_noise1.frequency(60);
 	noise1.amplitude(0.5);
 	
@@ -141,6 +138,9 @@ void setup(){
 	
 	mixMaster.gain(0, 1.0);
 	inverter.gain(-0.9); // invert and reduce gain to avoid clipping on output opamp.
+	
+	callisto.setMode(MODE_A, 2);
+	callisto.setMode(MODE_B, 2);
 }
 
 void loop(){
@@ -156,26 +156,25 @@ void loop(){
 	callisto.update();
 	
 	decay = max(callisto.readPotNorm(UI_D) * 1000.0, 10.0);
-	width = callisto.readPotNorm(UI_A) * decay;
-	depth = callisto.readPotNorm(UI_F) * 4.0;
-	click = callisto.readPotNorm(UI_B) / 2.0;
-	noise = callisto.readPotNorm(UI_E) * decay;
+	rate = callisto.readPotNorm(UI_E) * decay;
+	depth = callisto.readPotNorm(UI_A);
+	click = callisto.readPotNorm(UI_F);
+	noise = callisto.readPotNorm(UI_B) * decay;
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	vcf1.frequency(callisto.readPitch() * 4.0);
-	//vca1.release(decay);
-	//vca1.decay(decay);
-	envelope1.attack(decay);
-	osc1.frequencyModulation(depth);
-	vcf1.octaveControl(depth);
+	envelope1.releaseTime(decay);
 	
+	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
+	modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
+	
+	osc1.amplitude(1.0 - click);
 	noise1.amplitude(click);
 	impulse1.amplitude(click);
 	
-	eg1.attack(width);
-	eg_noise1.attack(noise);
-	//eg1.decay(width);
+	eg1.releaseTime(rate);
+	eg_noise1.releaseTime(noise);
   
 	AudioInterrupts();
 	
