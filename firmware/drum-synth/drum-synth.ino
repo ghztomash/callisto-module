@@ -122,18 +122,13 @@ void setup(){
 	impulse1.frequency(10000);
 	impulse1.amplitude(0.5);
 	
-	//eg1.delay(0);
-	//eg1.hold(0);
-	//eg1.attack(0);
-	//eg1.sustain(0);
-	//eg1.decay(40);
 	eg1.begin();
 	
 	envelope1.begin();
-	envelope1.attack(100);
+	envelope1.releaseTime(100);
 	
 	eg_noise1.begin();
-	eg_noise1.attack(100);
+	eg_noise1.releaseTime(100);
 	vcf_noise1.frequency(60);
 	noise1.amplitude(0.5);
 	
@@ -169,14 +164,7 @@ void loop(){
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	vcf1.frequency(callisto.readPitch() * 4.0);
-	//vca1.release(decay);
-	//vca1.decay(decay);
-	envelope1.attack(decay);
-	//osc1.frequencyModulation(depth);
-	//vcf1.octaveControl(depth);
-	
-	//dc1.amplitude(1.0 - depth);
-	//lfo1.amplitude(depth);
+	envelope1.releaseTime(decay);
 	
 	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
 	modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
@@ -185,9 +173,8 @@ void loop(){
 	noise1.amplitude(click);
 	impulse1.amplitude(click);
 	
-	eg1.attack(rate);
-	eg_noise1.attack(noise);
-	//eg1.decay(rate);
+	eg1.releaseTime(rate);
+	eg_noise1.releaseTime(noise);
   
 	AudioInterrupts();
 	
