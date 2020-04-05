@@ -38,17 +38,35 @@ AudioSynthWaveformModulated		osc1; // main oscillator
 AudioEnvelopeAR					envelope1;
 AudioEffectMultiply				vca1; // main oscilator envelope
 AudioFilterStateVariable		vcf1; // main oscillator filter
+
 AudioSynthWaveformDc			dc1;
 AudioSynthWaveformModulated		lfo1;
 AudioEnvelopeAR					eg1;
-AudioEffectMultiply				vca2;
+AudioEffectMultiply				modvca1;
 AudioSynthWaveformDc			dc2;
 AudioSynthWaveformModulated		lfo2;
 AudioEnvelopeAR					eg2;
-AudioEffectMultiply				vca3;
+AudioEffectMultiply				modvca2;
 AudioMixer4						modmix1;
 AudioMixer4						modmix2;
 AudioSynthBurst					impulse1;
+
+AudioSynthWaveformModulated		osc2;
+AudioEnvelopeAR					envelope2;
+AudioEffectMultiply				vca2;
+AudioFilterStateVariable		vcf2;
+AudioSynthWaveformModulated		osc3;
+AudioEnvelopeAR					envelope3;
+AudioEffectMultiply				vca3;
+AudioFilterStateVariable		vcf3;
+AudioSynthWaveformModulated		osc4;
+AudioEnvelopeAR					envelope4;
+AudioEffectMultiply				vca4;
+AudioFilterStateVariable		vcf4;
+AudioSynthWaveformModulated		osc5;
+AudioEnvelopeAR					envelope5;
+AudioEffectMultiply				vca5;
+AudioFilterStateVariable		vcf5;
 
 AudioSynthNoiseWhite			noise1;
 AudioEnvelopeAR					eg_noise1;
@@ -57,6 +75,7 @@ AudioFilterStateVariable		vcf_noise1; // main oscillator filter
 
 AudioAnalyzeRMS					rms1; // RMS analyzer for LED indicator
 AudioMixer4						mix1;
+AudioMixer4						mix2;
 AudioFilterStateVariable		vcf_mix1; // main oscillator filter
 AudioMixer4						mixMaster; // master mixer
 AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
@@ -68,29 +87,52 @@ AudioConnection					patchCordOsc1(osc1, 0, vca1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordVca1(envelope1, 0, vca1, 1); 	// env1 -> vca1
 AudioConnection					patchCordVcf1(vca1, 0, vcf1, 0);		// vca1 -> vcf1
 
+AudioConnection					patchCordOsc2(osc2, 0, vca2, 0); 		// osc1 -> vca1
+AudioConnection					patchCordVca2(envelope2, 0, vca2, 1); 	// env1 -> vca1
+AudioConnection					patchCordVcf2(vca2, 0, vcf2, 0);		// vca1 -> vcf1
+AudioConnection					patchCordOsc3(osc3, 0, vca3, 0); 		// osc1 -> vca1
+AudioConnection					patchCordVca3(envelope3, 0, vca3, 1); 	// env1 -> vca1
+AudioConnection					patchCordVcf3(vca3, 0, vcf3, 0);		// vca1 -> vcf1
+AudioConnection					patchCordOsc4(osc4, 0, vca4, 0); 		// osc1 -> vca1
+AudioConnection					patchCordVca4(envelope4, 0, vca4, 1); 	// env1 -> vca1
+AudioConnection					patchCordVcf4(vca4, 0, vcf4, 0);		// vca1 -> vcf1
+AudioConnection					patchCordOsc5(osc5, 0, vca5, 0); 		// osc1 -> vca1
+AudioConnection					patchCordVca5(envelope5, 0, vca5, 1); 	// env1 -> vca1
+AudioConnection					patchCordVcf5(vca5, 0, vcf5, 0);		// vca1 -> vcf1
+
+AudioConnection					patchCordMix2(vcf2, 0, mix2, 0);
+AudioConnection					patchCordMix3(vcf3, 0, mix2, 1);
+AudioConnection					patchCordMix4(vcf4, 0, mix2, 2);
+AudioConnection					patchCordMix5(vcf5, 0, mix2, 3);
+
 // Modulation Sources
 AudioConnection					patchCordfm(dc1, 0, modmix1, 0);
 AudioConnection					patchCordfm1(lfo1, 0, modmix1, 1);
-AudioConnection					patchCordfm2(modmix1, 0, vca2, 0);
-AudioConnection					patchCordfm3(eg1, 0, vca2, 1);
+AudioConnection					patchCordfm2(modmix1, 0, modvca1, 0);
+AudioConnection					patchCordfm3(eg1, 0, modvca1, 1);
 AudioConnection					patchCordffm(dc2, 0, modmix2, 0);
 AudioConnection					patchCordffm1(lfo2, 0, modmix2, 1);
-AudioConnection					patchCordffm2(modmix2, 0, vca3, 0);
-AudioConnection					patchCordffm3(eg2, 0, vca3, 1);
+AudioConnection					patchCordffm2(modmix2, 0, modvca2, 0);
+AudioConnection					patchCordffm3(eg2, 0, modvca2, 1);
 
-AudioConnection					patchCordfm4(vca2, 0, osc1, 0);			// osc1 frequency modulation
-AudioConnection					patchCordfm5(vca2, 0, vcf1, 1);			// osc1 filter frequency modulation
-AudioConnection					patchCordfm7(vca2, 0, vcf_noise1, 1);	
-AudioConnection					patchCordfm6(vca3, 0, vcf_mix1, 1);
+AudioConnection					patchCordfm4(modvca1, 0, osc1, 0);			// osc1 frequency modulation
+AudioConnection					patchCordfm5(modvca1, 0, vcf1, 1);			// osc1 filter frequency modulation
+AudioConnection					patchCordfm6(modvca1, 0, vcf_noise1, 1);	
+AudioConnection					patchCordfm7(modvca2, 0, vcf_mix1, 1);
+AudioConnection					patchCordfm8(modvca1, 0, osc2, 0);
+AudioConnection					patchCordfm9(modvca1, 0, osc3, 0);
+AudioConnection					patchCordfm10(modvca1, 0, osc4, 0);
+AudioConnection					patchCordfm11(modvca1, 0, osc5, 0);
 
 AudioConnection					patchCordNoise1(noise1, 0, vca_noise1, 0); 		// osc1 -> vca1
-AudioConnection					patchCordVca2(eg_noise1, 0, vca_noise1, 1); 	// env1 -> vca1
-AudioConnection					patchCordVcf2(vca_noise1, 0, vcf_noise1, 0);		// vca1 -> vcf1
+AudioConnection					patchCordNoise2(eg_noise1, 0, vca_noise1, 1); 	// env1 -> vca1
+AudioConnection					patchCordNoise3(vca_noise1, 0, vcf_noise1, 0);		// vca1 -> vcf1
 
-AudioConnection					patchCord4(vcf1, 0, mix1, 0);
-AudioConnection					patchCord5(impulse1, 0, mix1, 3);
-AudioConnection					patchCord3(vcf_noise1, 2, mix1, 2);  // noise filter high pass
-AudioConnection					patchCord6(mix1, 0, vcf_mix1, 0);
+AudioConnection					patchCord3(vcf1, 0, mix1, 0);
+AudioConnection					patchCord4(mix2, 0, mix1, 1);
+AudioConnection					patchCord5(vcf_noise1, 2, mix1, 2);  // noise filter high pass
+AudioConnection					patchCord6(impulse1, 0, mix1, 3);
+AudioConnection					patchCord7(mix1, 0, vcf_mix1, 0);
 AudioConnection					patchCordFilterMix1(vcf_mix1, 2, mixMaster, 0);
 AudioConnection					patchCordFilterMix2(vcf_mix1, 1, mixMaster, 1);
 AudioConnection					patchCordFilterMix3(vcf_mix1, 0, mixMaster, 2);
@@ -106,6 +148,7 @@ float decay = 40;
 float sourceMix = 0;
 float depth = 0;
 float rate = 0;
+float width = 0;
 float click = 0;
 float resonance = 0.7;
 float frequencyHarmonics = 30;
@@ -127,6 +170,23 @@ void setup(){
 	osc1.frequency(40);
 	osc1.amplitude(1.0);
 	osc1.frequencyModulation(4.0);
+	
+	osc2.begin(0.6, 40, WAVEFORM_SINE);
+	osc3.begin(0.3, 50, WAVEFORM_SINE);
+	osc4.begin(0.2, 60, WAVEFORM_SINE);
+	osc5.begin(0.1, 70, WAVEFORM_SINE);
+	osc2.frequencyModulation(4.0);
+	osc3.frequencyModulation(4.0);
+	osc4.frequencyModulation(4.0);
+	osc5.frequencyModulation(4.0);
+	vcf2.frequency(80);
+	vcf3.frequency(100);
+	vcf4.frequency(120);
+	vcf5.frequency(140);
+	vcf2.octaveControl(4.0);
+	vcf3.octaveControl(4.0);
+	vcf4.octaveControl(4.0);
+	vcf5.octaveControl(4.0);
 	
 	lfo1.begin(WAVEFORM_SINE);
 	lfo1.frequency(30);
@@ -157,6 +217,11 @@ void setup(){
 	envelope1.begin();
 	envelope1.releaseTime(100);
 	
+	envelope2.begin();
+	envelope3.begin();
+	envelope4.begin();
+	envelope5.begin();
+	
 	eg_noise1.begin();
 	eg_noise1.releaseTime(100);
 	vcf_noise1.frequency(60);
@@ -168,6 +233,11 @@ void setup(){
 	mix1.gain(1, 0.0);
 	mix1.gain(2, 0.0);
 	mix1.gain(3, 1.0);
+	
+	mix2.gain(0, 1.0);
+	mix2.gain(1, 1.0);
+	mix2.gain(2, 1.0);
+	mix2.gain(3, 1.0);
 	
 	mixMaster.gain(0, 1.0);
 	mixMaster.gain(1, 0.0);
@@ -185,8 +255,14 @@ void loop(){
 		eg2.noteOff();
 		eg_noise1.noteOff();
 		
-		if(!HOLD_TRIGGER)
+		if(!HOLD_TRIGGER){
 			envelope1.noteOff();
+			envelope2.noteOff();
+			envelope3.noteOff();
+			envelope4.noteOff();
+			envelope5.noteOff();
+		}
+			
 	}
 	
 	callisto.update();
@@ -195,16 +271,31 @@ void loop(){
 	cutoff = FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_D)*7.0-3.0);
 	rate = callisto.readPotNorm(UI_E) * decay;
 	depth = callisto.readPotNorm(UI_A);
-	click = callisto.readPotNorm(UI_F);
 	resonance = callisto.readPotNorm(UI_B) * 1.15;
+	width = callisto.readPotNorm(UI_E) + 1.0;
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	vcf1.frequency(callisto.readPitch() * 4.0);
 	vcf_noise1.frequency(callisto.readPitch());
 	vcf_mix1.frequency(cutoff);
-	//vcf_mix1.resonance(resonance);
+	
+	
 	envelope1.releaseTime(decay);
+	
+	osc2.frequency(callisto.readPitch());
+	osc3.frequency(callisto.readPitch() * 1.49829 * width);
+	osc4.frequency(callisto.readPitch() * 2.0 * width * width);
+	osc5.frequency(callisto.readPitch() * 2.99661 * width * width * width);
+	vcf2.frequency(callisto.readPitch() * 4.0);
+	vcf3.frequency(callisto.readPitch() * 1.49829 * width * 4.0);
+	vcf4.frequency(callisto.readPitch() * 2.0 * width * width * 4.0);
+	vcf5.frequency(callisto.readPitch() * 2.99661 * width * width * width * 4.0);
+	
+	envelope2.releaseTime(decay);
+	envelope3.releaseTime(decay * 0.75);
+	envelope4.releaseTime(decay * 0.5);
+	envelope5.releaseTime(decay * 0.25);
 	
 	lfo1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*4.0-1.0));
 	lfo2.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
@@ -214,10 +305,6 @@ void loop(){
 	
 	modmix2.gain(0,max((1.0 - resonance) * 2.0 - 1.0, 0.0));
 	modmix2.gain(1,max(resonance * 2.0 - 1.0, 0.0));
-	
-	//osc1.amplitude(1.0 - click);
-	//noise1.amplitude(click);
-	//impulse1.amplitude(click);
 	
 	eg1.releaseTime(rate);
 	eg2.releaseTime(rate);
@@ -260,9 +347,17 @@ void triggerChange(){
 	
 	if(triggerState == HIGH){
 		osc1.sync();
+		osc2.sync();
+		osc3.sync();
+		osc4.sync();
+		osc5.sync();
 		lfo1.sync();
 		lfo2.sync();
 		envelope1.noteOn();
+		envelope2.noteOn();
+		envelope3.noteOn();
+		envelope4.noteOn();
+		envelope5.noteOn();
 		eg1.noteOn();
 		eg2.noteOn();
 		impulse1.begin();
@@ -274,6 +369,10 @@ void triggerChange(){
 		eg1.noteOff();
 		eg2.noteOff();
 		envelope1.noteOff();
+		envelope2.noteOff();
+		envelope3.noteOff();
+		envelope4.noteOff();
+		envelope5.noteOff();
 		eg_noise1.noteOff();
 	}
 	
