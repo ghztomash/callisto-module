@@ -76,7 +76,7 @@ AudioFilterStateVariable		vcf_noise1; // main oscillator filter
 AudioAnalyzeRMS					rms1; // RMS analyzer for LED indicator
 AudioMixer4						mix1;
 AudioMixer4						mix2;
-AudioFilterStateVariable		vcf_mix1; // main oscillator filter
+AudioMixer4						mix3;
 AudioMixer4						mixMaster; // master mixer
 AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
 
@@ -118,11 +118,10 @@ AudioConnection					patchCordffm3(eg2, 0, modvca2, 1);
 AudioConnection					patchCordfm4(modvca1, 0, osc1, 0);			// osc1 frequency modulation
 AudioConnection					patchCordfm5(modvca1, 0, vcf1, 1);			// osc1 filter frequency modulation
 AudioConnection					patchCordfm6(modvca1, 0, vcf_noise1, 1);	
-AudioConnection					patchCordfm7(modvca2, 0, vcf_mix1, 1);
-AudioConnection					patchCordfm8(modvca1, 0, osc2, 0);
-AudioConnection					patchCordfm9(modvca1, 0, osc3, 0);
-AudioConnection					patchCordfm10(modvca1, 0, osc4, 0);
-AudioConnection					patchCordfm11(modvca1, 0, osc5, 0);
+//AudioConnection					patchCordfm8(modvca1, 0, osc2, 0);
+//AudioConnection					patchCordfm9(modvca1, 0, osc3, 0);
+//AudioConnection					patchCordfm10(modvca1, 0, osc4, 0);
+//AudioConnection					patchCordfm11(modvca1, 0, osc5, 0);
 
 AudioConnection					patchCordNoise1(noise1, 0, vca_noise1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordNoise2(eg_noise1, 0, vca_noise1, 1); 	// env1 -> vca1
@@ -130,12 +129,10 @@ AudioConnection					patchCordNoise3(vca_noise1, 0, vcf_noise1, 0);		// vca1 -> v
 
 AudioConnection					patchCord3(vcf1, 0, mix1, 0);
 AudioConnection					patchCord4(mix2, 0, mix1, 1);
-AudioConnection					patchCord5(vcf_noise1, 2, mix1, 2);  // noise filter high pass
-AudioConnection					patchCord6(impulse1, 0, mix1, 3);
-AudioConnection					patchCord7(mix1, 0, vcf_mix1, 0);
-AudioConnection					patchCordFilterMix1(vcf_mix1, 2, mixMaster, 0);
-AudioConnection					patchCordFilterMix2(vcf_mix1, 1, mixMaster, 1);
-AudioConnection					patchCordFilterMix3(vcf_mix1, 0, mixMaster, 2);
+AudioConnection					patchCord5(vcf_noise1, 2, mix3, 1);  // noise filter high pass
+AudioConnection					patchCord6(impulse1, 0, mix3, 0);
+AudioConnection					patchCord7(mix1, 0, mixMaster, 0);
+AudioConnection					patchCord8(mix3, 0, mixMaster, 1);
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
 AudioConnection					patchCordinv(mixMaster, 0, inverter, 0);
 AudioConnection					patchCordout(inverter, 0, out1, 0);
@@ -144,7 +141,8 @@ CallistoHAL callisto;
 
 float frequency = 30;
 float cutoff = 30;
-float decay = 40;
+float decayBody = 40;
+float decayTransient = 40;
 float sourceMix = 0;
 float depth = 0;
 float rate = 0;
@@ -200,17 +198,13 @@ void setup(){
 	vcf1.frequency(60);
 	vcf1.octaveControl(4.0);
 	
-	vcf_mix1.frequency(60);
-	vcf_mix1.octaveControl(4.0);
-	vcf_mix1.resonance(1.15);
-	
 	modmix1.gain(0,1.0);
-	modmix1.gain(1,1.0);
-	modmix2.gain(0,1.0);
-	modmix2.gain(1,1.0);
+	modmix1.gain(1,0.0);
+	modmix2.gain(0,0.0);
+	modmix2.gain(1,0.0);
 	
 	impulse1.frequency(10000);
-	impulse1.amplitude(0.5);
+	impulse1.amplitude(1.0);
 	
 	eg1.begin();
 	eg2.begin();
@@ -267,25 +261,25 @@ void loop(){
 	}
 	
 	callisto.update();
-	
-	decay = max(callisto.readPotNorm(UI_F) * 1000.0, 10.0);
+	sourceMix = callisto.readPotNorm(UI_F);
+	decayBody = max(callisto.readPotNorm(UI_A) * 500.0, 10.0);
+	decayTransient = max(callisto.readPotNorm(UI_B) * 500.0, 1.0);
 	cutoff = FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_D)*7.0-3.0);
-	rate = callisto.readPotNorm(UI_E) * decay;
-	if(lastMode == 1) {
-		rate = 0.2 * decay;
-	}
-	depth = callisto.readPotNorm(UI_A);
-	resonance = callisto.readPotNorm(UI_B) * 1.15;
+	
+	//rate = callisto.readPotNorm(UI_E) * decayBody;
+
+	depth = callisto.readPotNorm(UI_E);
+	//resonance = callisto.readPotNorm(UI_B) * 1.15;
 	width = callisto.readPotNorm(UI_E) + 1.0;
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	vcf1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
-	vcf_noise1.frequency(callisto.readPitch());
-	vcf_mix1.frequency(cutoff);
 	
+	vcf_noise1.frequency(cutoff);
+	impulse1.frequency(cutoff);
 	
-	envelope1.releaseTime(decay);
+	envelope1.releaseTime(decayBody);
 	
 	osc2.frequency(callisto.readPitch());
 	osc3.frequency(callisto.readPitch() * 1.49829 * width);
@@ -297,23 +291,26 @@ void loop(){
 	vcf5.frequency(min(callisto.readPitch() * 2.99661 * width * width * width * 4.0 , 14000.0));
 	//Serial.println(callisto.readPitch() * 4.0);
 	
-	envelope2.releaseTime(decay);
-	envelope3.releaseTime(decay * 0.75);
-	envelope4.releaseTime(decay * 0.5);
-	envelope5.releaseTime(decay * 0.25);
+	envelope2.releaseTime(decayBody);
+	envelope3.releaseTime(decayBody * 0.75);
+	envelope4.releaseTime(decayBody * 0.5);
+	envelope5.releaseTime(decayBody * 0.25);
 	
-	lfo1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*3.0-2.0));
-	lfo2.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
+	//lfo1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*3.0-2.0));
+	//lfo2.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
 	
-	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
-	modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
+	modmix1.gain(0, depth);
+	//modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
 	
-	modmix2.gain(0,max((1.0 - resonance) * 2.0 - 1.0, 0.0));
-	modmix2.gain(1,max(resonance * 2.0 - 1.0, 0.0));
+	//modmix2.gain(0,max((1.0 - resonance) * 2.0 - 1.0, 0.0));
+	//modmix2.gain(1,max(resonance * 2.0 - 1.0, 0.0));
 	
-	eg1.releaseTime(rate);
+	mixMaster.gain(0, 1.0 - sourceMix);
+	mixMaster.gain(1, sourceMix);
+	
+	eg1.releaseTime(decayBody / 4.0);
 	eg2.releaseTime(rate);
-	eg_noise1.releaseTime(decay);
+	eg_noise1.releaseTime(decayTransient);
   
 	AudioInterrupts();
 	
@@ -340,8 +337,8 @@ void modeBChanged(int mode){
 	Serial.println(mode);
 	
 	AudioNoInterrupts();
-	mixMaster.gain(lastFilterMode, 0.0);
-	mixMaster.gain(mode, 1.0);
+	mix3.gain(lastFilterMode, 0.0);
+	mix3.gain(mode, 1.0);
 	AudioInterrupts();
 	
 	lastFilterMode = mode;
