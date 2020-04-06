@@ -190,8 +190,9 @@ void setup(){
 	
 	lfo1.begin(WAVEFORM_SINE);
 	lfo1.frequency(30);
-	lfo1.amplitude(0.25);
-	lfo1.offset(0.25);
+	lfo1.amplitude(1.0);
+	//lfo1.amplitude(0.25);
+	//lfo1.offset(0.25);
 	lfo2.begin(WAVEFORM_SINE);
 	lfo2.frequency(30);
 	lfo2.amplitude(0.25);
@@ -270,13 +271,16 @@ void loop(){
 	decay = max(callisto.readPotNorm(UI_F) * 1000.0, 10.0);
 	cutoff = FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_D)*7.0-3.0);
 	rate = callisto.readPotNorm(UI_E) * decay;
+	if(lastMode == 1) {
+		rate = 0.2 * decay;
+	}
 	depth = callisto.readPotNorm(UI_A);
 	resonance = callisto.readPotNorm(UI_B) * 1.15;
 	width = callisto.readPotNorm(UI_E) + 1.0;
 	
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
-	vcf1.frequency(callisto.readPitch() * 4.0);
+	vcf1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
 	vcf_noise1.frequency(callisto.readPitch());
 	vcf_mix1.frequency(cutoff);
 	
@@ -287,17 +291,18 @@ void loop(){
 	osc3.frequency(callisto.readPitch() * 1.49829 * width);
 	osc4.frequency(callisto.readPitch() * 2.0 * width * width);
 	osc5.frequency(callisto.readPitch() * 2.99661 * width * width * width);
-	vcf2.frequency(callisto.readPitch() * 4.0);
-	vcf3.frequency(callisto.readPitch() * 1.49829 * width * 4.0);
-	vcf4.frequency(callisto.readPitch() * 2.0 * width * width * 4.0);
-	vcf5.frequency(callisto.readPitch() * 2.99661 * width * width * width * 4.0);
+	vcf2.frequency(min(callisto.readPitch() * 4.0 , 14000.0));
+	vcf3.frequency(min(callisto.readPitch() * 1.49829 * width * 4.0 , 14000.0));
+	vcf4.frequency(min(callisto.readPitch() * 2.0 * width * width * 4.0 , 14000.0));
+	vcf5.frequency(min(callisto.readPitch() * 2.99661 * width * width * width * 4.0 , 14000.0));
+	//Serial.println(callisto.readPitch() * 4.0);
 	
 	envelope2.releaseTime(decay);
 	envelope3.releaseTime(decay * 0.75);
 	envelope4.releaseTime(decay * 0.5);
 	envelope5.releaseTime(decay * 0.25);
 	
-	lfo1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*4.0-1.0));
+	lfo1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*3.0-2.0));
 	lfo2.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
 	
 	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
@@ -364,7 +369,7 @@ void triggerChange(){
 		eg_noise1.noteOn();
 		lastTrigger = millis();
 		
-		//Serial.println(resonance);
+		//Serial.println(callisto.readPotNorm(UI_E));
 	} else {
 		eg1.noteOff();
 		eg2.noteOff();
