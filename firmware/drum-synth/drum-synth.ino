@@ -29,6 +29,9 @@
 #include "callisto_hal.h"
 #include "envelope_ar.h"
 #include "synth_burst.h"
+#include "play_memory_sample.h"
+#include "AudioSampleSnare2.h"
+#include "AudioSampleHat1.h"
 
 #define VERSION 1
 #define HOLD_TRIGGER 0
@@ -38,6 +41,9 @@ AudioSynthWaveformModulated		osc1; // main oscillator
 AudioEnvelopeAR					envelope1;
 AudioEffectMultiply				vca1; // main oscilator envelope
 AudioFilterStateVariable		vcf1; // main oscillator filter
+
+AudioPlayMemorySample sample1;
+AudioPlayMemorySample sample2;
 
 AudioSynthWaveformDc			dc1;
 AudioSynthWaveformModulated		lfo1;
@@ -117,7 +123,7 @@ AudioConnection					patchCordffm3(eg2, 0, modvca2, 1);
 
 AudioConnection					patchCordfm4(modvca1, 0, osc1, 0);			// osc1 frequency modulation
 AudioConnection					patchCordfm5(modvca1, 0, vcf1, 1);			// osc1 filter frequency modulation
-AudioConnection					patchCordfm6(modvca1, 0, vcf_noise1, 1);	
+AudioConnection					patchCordfm6(modvca2, 0, vcf_noise1, 1);	
 //AudioConnection					patchCordfm8(modvca1, 0, osc2, 0);
 //AudioConnection					patchCordfm9(modvca1, 0, osc3, 0);
 //AudioConnection					patchCordfm10(modvca1, 0, osc4, 0);
@@ -129,8 +135,10 @@ AudioConnection					patchCordNoise3(vca_noise1, 0, vcf_noise1, 0);		// vca1 -> v
 
 AudioConnection					patchCord3(vcf1, 0, mix1, 0);
 AudioConnection					patchCord4(mix2, 0, mix1, 1);
+AudioConnection					patchCord1(sample2, 0, mix1, 2);
 AudioConnection					patchCord5(vcf_noise1, 2, mix3, 1);  // noise filter high pass
 AudioConnection					patchCord6(impulse1, 0, mix3, 0);
+AudioConnection					patchCord0(sample1, 0, mix3, 2);
 AudioConnection					patchCord7(mix1, 0, mixMaster, 0);
 AudioConnection					patchCord8(mix3, 0, mixMaster, 1);
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
@@ -200,7 +208,7 @@ void setup(){
 	
 	modmix1.gain(0,1.0);
 	modmix1.gain(1,0.0);
-	modmix2.gain(0,0.0);
+	modmix2.gain(0,1.0);
 	modmix2.gain(1,0.0);
 	
 	impulse1.frequency(10000);
@@ -227,12 +235,27 @@ void setup(){
 	mix1.gain(0, 1.0);
 	mix1.gain(1, 0.0);
 	mix1.gain(2, 0.0);
-	mix1.gain(3, 1.0);
+	mix1.gain(3, 0.0);
 	
 	mix2.gain(0, 1.0);
 	mix2.gain(1, 1.0);
 	mix2.gain(2, 1.0);
 	mix2.gain(3, 1.0);
+	
+	mix3.gain(0, 1.0);
+	mix3.gain(1, 0.0);
+	mix3.gain(2, 0.0);
+	mix3.gain(3, 0.0);
+	
+	sample1.setSpeed(1.0);
+	sample1.setLength(138);
+	sample1.pitchMod(1.0);
+	sample1.setSample(AudioSampleHat1, 4673);
+	
+	sample2.setSpeed(1.0);
+	sample2.setLength(138);
+	sample1.pitchMod(1.0);
+	sample2.setSample(AudioSampleSnare2, 4673);
 	
 	mixMaster.gain(0, 1.0);
 	mixMaster.gain(1, 0.0);
@@ -302,15 +325,22 @@ void loop(){
 	modmix1.gain(0, depth);
 	//modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
 	
-	//modmix2.gain(0,max((1.0 - resonance) * 2.0 - 1.0, 0.0));
+	modmix2.gain(0, depth);
 	//modmix2.gain(1,max(resonance * 2.0 - 1.0, 0.0));
 	
 	mixMaster.gain(0, 1.0 - sourceMix);
 	mixMaster.gain(1, sourceMix);
 	
 	eg1.releaseTime(decayBody / 4.0);
-	eg2.releaseTime(rate);
+	eg2.releaseTime(decayTransient / 4.0);
 	eg_noise1.releaseTime(decayTransient);
+	
+	sample1.setLength(decayTransient);
+	sample2.setLength(decayBody);
+	sample1.setSpeed(callisto.readPotNorm(UI_D));
+	sample2.setSpeed(callisto.readPotNorm(UI_C));
+	sample1.pitchMod(depth);
+	sample2.pitchMod(depth);
   
 	AudioInterrupts();
 	
@@ -365,6 +395,9 @@ void triggerChange(){
 		impulse1.begin();
 		eg_noise1.noteOn();
 		lastTrigger = millis();
+		
+		sample1.play();
+		sample2.play();
 		
 		//Serial.println(callisto.readPotNorm(UI_E));
 	} else {
