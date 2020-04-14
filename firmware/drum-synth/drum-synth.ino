@@ -42,8 +42,12 @@ AudioEnvelopeAR					envelope1;
 AudioEffectMultiply				vca1; // main oscilator envelope
 AudioFilterStateVariable		vcf1; // main oscillator filter
 
-AudioPlayMemorySample sample1;
-AudioPlayMemorySample sample2;
+AudioPlayMemorySample			sample1;
+AudioEnvelopeAR					eg_sample1;
+AudioEffectMultiply				vca_sample1;
+AudioPlayMemorySample			sample2;
+AudioEnvelopeAR					eg_sample2;
+AudioEffectMultiply				vca_sample2;
 
 AudioSynthWaveformDc			dc1;
 AudioSynthWaveformModulated		lfo1;
@@ -124,6 +128,8 @@ AudioConnection					patchCordffm3(eg2, 0, modvca2, 1);
 AudioConnection					patchCordfm4(modvca1, 0, osc1, 0);			// osc1 frequency modulation
 AudioConnection					patchCordfm5(modvca1, 0, vcf1, 1);			// osc1 filter frequency modulation
 AudioConnection					patchCordfm6(modvca2, 0, vcf_noise1, 1);	
+AudioConnection					patchCordfm7(modvca2, 0, sample1, 0);
+AudioConnection					patchCordfm8(modvca1, 0, sample2, 0);
 //AudioConnection					patchCordfm8(modvca1, 0, osc2, 0);
 //AudioConnection					patchCordfm9(modvca1, 0, osc3, 0);
 //AudioConnection					patchCordfm10(modvca1, 0, osc4, 0);
@@ -133,12 +139,17 @@ AudioConnection					patchCordNoise1(noise1, 0, vca_noise1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordNoise2(eg_noise1, 0, vca_noise1, 1); 	// env1 -> vca1
 AudioConnection					patchCordNoise3(vca_noise1, 0, vcf_noise1, 0);		// vca1 -> vcf1
 
+AudioConnection					patchCordspsp(sample1, 0, vca_sample1, 0);
+AudioConnection					patchCordspsp1(eg_sample1, 0, vca_sample1, 1);
+AudioConnection					patchCordspsp2(sample2, 0, vca_sample2, 0);
+AudioConnection					patchCordspsp3(eg_sample2, 0, vca_sample2, 1);
+
 AudioConnection					patchCord3(vcf1, 0, mix1, 0);
 AudioConnection					patchCord4(mix2, 0, mix1, 1);
-AudioConnection					patchCord1(sample2, 0, mix1, 2);
+AudioConnection					patchCord1(vca_sample2, 0, mix1, 2);
 AudioConnection					patchCord5(vcf_noise1, 2, mix3, 1);  // noise filter high pass
 AudioConnection					patchCord6(impulse1, 0, mix3, 0);
-AudioConnection					patchCord0(sample1, 0, mix3, 2);
+AudioConnection					patchCord0(vca_sample1, 0, mix3, 2);
 AudioConnection					patchCord7(mix1, 0, mixMaster, 0);
 AudioConnection					patchCord8(mix3, 0, mixMaster, 1);
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
@@ -247,14 +258,16 @@ void setup(){
 	mix3.gain(2, 0.0);
 	mix3.gain(3, 0.0);
 	
+	eg_sample1.begin();
+	eg_sample2.begin();
 	sample1.setSpeed(1.0);
-	sample1.setLength(138);
-	sample1.pitchMod(1.0);
+	//sample1.setLength(138);
+	//sample1.pitchMod(1.0);
 	sample1.setSample(AudioSampleHat1, 4673);
 	
 	sample2.setSpeed(1.0);
-	sample2.setLength(138);
-	sample1.pitchMod(1.0);
+	//sample2.setLength(138);
+	//sample1.pitchMod(1.0);
 	sample2.setSample(AudioSampleSnare2, 4673);
 	
 	mixMaster.gain(0, 1.0);
@@ -272,6 +285,8 @@ void loop(){
 		eg1.noteOff();
 		eg2.noteOff();
 		eg_noise1.noteOff();
+		eg_sample1.noteOff();
+		eg_sample2.noteOff();
 		
 		if(!HOLD_TRIGGER){
 			envelope1.noteOff();
@@ -335,12 +350,14 @@ void loop(){
 	eg2.releaseTime(decayTransient / 4.0);
 	eg_noise1.releaseTime(decayTransient);
 	
-	sample1.setLength(decayTransient);
-	sample2.setLength(decayBody);
-	sample1.setSpeed(callisto.readPotNorm(UI_D));
-	sample2.setSpeed(callisto.readPotNorm(UI_C));
-	sample1.pitchMod(depth);
-	sample2.pitchMod(depth);
+	//sample1.setLength(decayTransient);
+	//sample2.setLength(decayBody);
+	sample1.setSpeed(callisto.readPotNorm(UI_D) * 2.0);
+	eg_sample1.releaseTime(decayTransient);
+	sample2.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+	eg_sample2.releaseTime(decayBody);
+	//sample1.pitchMod(depth);
+	//sample2.pitchMod(depth);
   
 	AudioInterrupts();
 	
@@ -398,8 +415,9 @@ void triggerChange(){
 		
 		sample1.play();
 		sample2.play();
+		eg_sample1.noteOn();
+		eg_sample2.noteOn();
 		
-		//Serial.println(callisto.readPotNorm(UI_E));
 	} else {
 		eg1.noteOff();
 		eg2.noteOff();
@@ -409,6 +427,8 @@ void triggerChange(){
 		envelope4.noteOff();
 		envelope5.noteOff();
 		eg_noise1.noteOff();
+		eg_sample1.noteOff();
+		eg_sample2.noteOff();
 	}
 	
 }

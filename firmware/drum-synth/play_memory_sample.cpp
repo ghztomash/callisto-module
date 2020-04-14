@@ -6,45 +6,33 @@
 
 void AudioPlayMemorySample::play(const unsigned int *data, unsigned int size)
 {
-
 	playing = 0;
-	prior = 0;
 	format = *data++;
 	next = data;
 	beginning = data;
 	length = format & 0xFFFFFF;
-	env_lin_current = 0x7fff0000;
 	playing = format >> 24;
-	sampleSize = length/2;
-	
+	sampleSize = (int)(length/2) << 15;
 	phase = 0;
 }
 
 void AudioPlayMemorySample::play()
 {
 	playing = 0;
-	prior = 0;
 	next = beginning;
 	length = format & 0xFFFFFF;
-	env_lin_current = 0x7fff0000;
 	playing = format >> 24;
-	
-	if(phase_incr<0)
-		phase=sampleSize;
-	else
-		phase = 0;
+	phase = 0;
 }
 
 void AudioPlayMemorySample::setSample(const unsigned int *data, unsigned int size)
 {
 	playing = 0;
-	prior = 0;
 	format = *data++;
 	next = data;
 	beginning = data;
 	length = format & 0xFFFFFF;
-	sampleSize = length/2;
-	//parseSample();
+	sampleSize = (int)(length/2) << 15;
 }
 
 void AudioPlayMemorySample::stop(void)
@@ -52,185 +40,60 @@ void AudioPlayMemorySample::stop(void)
 	playing = 0;
 }
 
-extern "C" {
-extern const int16_t ulaw_decode_table[256];
-};
-
 void AudioPlayMemorySample::update(void)
 {
-	audio_block_t *block;
+	audio_block_t *block, *blockb;
 	const unsigned int *in;
-	int16_t *out;
-	uint32_t tmp32, consumed;
-	int16_t s0, s1, s2, s3, s4;
+	int16_t *out, *pmod;
+	uint32_t tmp32;
 	int i;
-	float mod;
-	
-	int32_t env_sqr_current; // the square of the linear value - inexpensive quasi exponential decay.
 	uint32_t index;
+	int32_t local_phase_increment;
 
 	if (!playing) return;
 	block = allocate();
 	if (block == NULL) return;
+	
+	blockb = receiveReadOnly(0);
 
 	//Serial.write('.');
 
 	out = block->data;
+	pmod = blockb->data;
 	in = next;
-	s0 = prior;
+	//s0 = prior;
+	
+	local_phase_increment = phase_incr + *pmod;
+	if (local_phase_increment <= 0)
+		local_phase_increment = 1;
+	
+	
+	//Serial.print(phase_incr);
+	//Serial.print('\t');
+	//Serial.print(*pmod);
+	//Serial.print('\t');
+	//Serial.println(local_phase_increment);
 
 	switch (playing) {
-	  case 0x01: // u-law encoded, 44100 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 4) {//4
-			index = phase;
-			//tmp32 = *in++;
-			tmp32 = in[index];
-			*out++ = ulaw_decode_table[(tmp32 >> 0) & 255];
-			*out++ = ulaw_decode_table[(tmp32 >> 8) & 255];
-			*out++ = ulaw_decode_table[(tmp32 >> 16) & 255];
-			*out++ = ulaw_decode_table[(tmp32 >> 24) & 255];
-			
-			phase += phase_incr;
-			if((phase>sampleSize)||(phase<0)){
-				playing = 0;
-				break;
-				}
-		}
-		consumed = 128*phase_incr;
-		//consumed = 128;
-		break;
-
 	  case 0x81: // 16 bit PCM, 44100 Hz
 		// this part mostly for my stuff
 		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 2) {
-			index = phase;
+			index = phase >> 15;
 			
-			if(env_lin_current < 0x0000ffff)
-				{
-				  // If envelope has expired, then stuff zeros into output buffer.
-				  *out++ = 0;
-				  *out++ = 0;
-				  playing = 0;
-				}
-			else{
-				env_lin_current -= env_decrement;
-				env_sqr_current = multiply_16tx16t(env_lin_current, env_lin_current) >> 14;
-				//env_sqr_current = 0xffff;
-				mod = env_sqr_current/65532.0;
-				
-				if(interpolation){
-					tmp32 = in[index];
-					uint32_t nextSample = in[index+1];
-					int16_t diffA =((int16_t)(tmp32 >> 16)-(int16_t)(tmp32 & 65535))*((phase_incr/2.0)/(phase_incr));
-					int16_t diffB =((int16_t)(nextSample & 65535)-(int16_t)(tmp32 >> 16))*((phase_incr/2.0)/(phase_incr));
-					
-					*out++ = (int16_t)(tmp32 & 65535)+diffA;
-					*out++ = (int16_t)(tmp32 >> 16)+diffB;
-					
-				}else{
-				//tmp32 = *in++;
-					tmp32 = in[index];
-					//*out++ = (int16_t)(tmp32 & 65535);
-					//*out++ = (int16_t)(tmp32 >> 16);
-					
-					int32_t val1 = signed_multiply_32x16b(env_sqr_current, tmp32);
-					int32_t val2 = signed_multiply_32x16t(env_sqr_current, tmp32);
-					val1 = signed_saturate_rshift(val1, 16, 0);
-					val2 = signed_saturate_rshift(val2, 16, 0);
-					//uint32_t ppp = pack_16b_16b(val2, val1);
-					
-					*out++ = (int16_t)val1;
-					*out++ = (int16_t)val2;
-				}
-				
-				phase += phase_incr + mod * pmod;
-				if((phase>sampleSize)||(phase<0)){
+			if (phase + local_phase_increment> sampleSize) {
 					playing = 0;
-					break;
-				}
+					*out++ = 0;
+					*out++ = 0;
+					//break;
+			} else {
+					tmp32 = in[index];
+					*out++ = (int16_t)(tmp32 & 65535);
+					*out++ = (int16_t)(tmp32 >> 16);
 			}
+				//Serial.println(*pmod);
+				
+				phase += local_phase_increment; // + mod * pmod;
 		}
-		consumed = 128*phase_incr + mod * pmod;
-		break;
-
-	  case 0x02: // u-law encoded, 22050 Hz 
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 8) {
-			tmp32 = *in++;
-			s1 = ulaw_decode_table[(tmp32 >> 0) & 255];
-			s2 = ulaw_decode_table[(tmp32 >> 8) & 255];
-			s3 = ulaw_decode_table[(tmp32 >> 16) & 255];
-			s4 = ulaw_decode_table[(tmp32 >> 24) & 255];
-			*out++ = (s0 + s1) >> 1;
-			*out++ = s1;
-			*out++ = (s1 + s2) >> 1;
-			*out++ = s2;
-			*out++ = (s2 + s3) >> 1;
-			*out++ = s3;
-			*out++ = (s3 + s4) >> 1;
-			*out++ = s4;
-			s0 = s4;
-		}
-		consumed = 64;
-		break;
-
-	  case 0x82: // 16 bits PCM, 22050 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 4) {
-			tmp32 = *in++;
-			s1 = (int16_t)(tmp32 & 65535);
-			s2 = (int16_t)(tmp32 >> 16);
-			*out++ = (s0 + s1) >> 1;
-			*out++ = s1;
-			*out++ = (s1 + s2) >> 1;
-			*out++ = s2;
-			s0 = s2;
-		}
-		consumed = 64;
-		break;
-
-	  case 0x03: // u-law encoded, 11025 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 16) {
-			tmp32 = *in++;
-			s1 = ulaw_decode_table[(tmp32 >> 0) & 255];
-			s2 = ulaw_decode_table[(tmp32 >> 8) & 255];
-			s3 = ulaw_decode_table[(tmp32 >> 16) & 255];
-			s4 = ulaw_decode_table[(tmp32 >> 24) & 255];
-			*out++ = (s0 * 3 + s1) >> 2;
-			*out++ = (s0 + s1)     >> 1;
-			*out++ = (s0 + s1 * 3) >> 2;
-			*out++ = s1;
-			*out++ = (s1 * 3 + s2) >> 2;
-			*out++ = (s1 + s2)     >> 1;
-			*out++ = (s1 + s2 * 3) >> 2;
-			*out++ = s2;
-			*out++ = (s2 * 3 + s3) >> 2;
-			*out++ = (s2 + s3)     >> 1;
-			*out++ = (s2 + s3 * 3) >> 2;
-			*out++ = s3;
-			*out++ = (s3 * 3 + s4) >> 2;
-			*out++ = (s3 + s4)     >> 1;
-			*out++ = (s3 + s4 * 3) >> 2;
-			*out++ = s4;
-			s0 = s4;
-		}
-		consumed = 32;
-		break;
-
-	  case 0x83: // 16 bit PCM, 11025 Hz
-		for (i=0; i < AUDIO_BLOCK_SAMPLES; i += 8) {
-			tmp32 = *in++;
-			s1 = (int16_t)(tmp32 & 65535);
-			s2 = (int16_t)(tmp32 >> 16);
-			*out++ = (s0 * 3 + s1) >> 2;
-			*out++ = (s0 + s1)     >> 1;
-			*out++ = (s0 + s1 * 3) >> 2;
-			*out++ = s1;
-			*out++ = (s1 * 3 + s2) >> 2;
-			*out++ = (s1 + s2)     >> 1;
-			*out++ = (s1 + s2 * 3) >> 2;
-			*out++ = s2;
-			s0 = s2;
-		}
-		consumed = 32;
 		break;
 
 	  default:
@@ -239,17 +102,11 @@ void AudioPlayMemorySample::update(void)
 		return;
 	}
 	
-	prior = s0;
 	next = in;
-	
-	//if (length*phase_incr > consumed) {
-	//	length -= consumed;
-	//} else {
-	//	playing = 0;
-	//}
 	
 	transmit(block);
 	release(block);
+	release(blockb);
 }
 
 
@@ -327,42 +184,14 @@ uint32_t AudioPlayMemorySample::lengthBytes(void)
 
 void AudioPlayMemorySample::setSpeed(float s)
 {
-	if(s<0)
-		phase=sampleSize;
+	if( s < 0.01 )
+		s = 0.01;
+	//phase = sampleSize; // reverse?
 		
-	phase_incr = s;
-}
-
-long double AudioPlayMemorySample::getPhase(void)
-{
-	return phase;
+	phase_incr = INT16_MAX * s;
 }
 
 float AudioPlayMemorySample::getSpeed(void)
 {
-	return phase_incr;
-}
-
-void AudioPlayMemorySample::pitchMod(float p)
-{
-	if(p<0.0)
-		pmod=0.0;
-	else if(p>1)
-		pmod=1;
-	else
-		pmod=p;
-	pmod-=0.5;
-}
-
-
-void AudioPlayMemorySample::parseSample(){
-	uint32_t tmp32;
-	//buffer.clear();
-	//buffer.reserve(44161);
-	
-	//for(int i=0; i<=sampleSize; i++){
-	//	tmp32 = beginning[i];
-	//	buffer.push_back((int16_t)(tmp32 & 65535));
-	//	buffer.push_back((int16_t)(tmp32 >> 16));
-	//}
+	return phase_incr / (float) INT16_MAX;
 }
