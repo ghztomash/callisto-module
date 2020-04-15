@@ -60,7 +60,9 @@ AudioSynthWaveformModulated		osc2;
 AudioSynthWaveformModulated		osc3;
 AudioSynthWaveformModulated		osc4;
 
-AudioSynthNoiseWhite			noise1;
+AudioSynthNoiseWhite			noise2;
+
+AudioSynthNoisePink				noise1;
 AudioFilterStateVariable		vcf_noise1; // filter
 
 
@@ -74,6 +76,7 @@ AudioMixer4						mixInstrument;
 AudioEnvelopeAR					eg1;
 AudioEffectMultiply				vca1;
 AudioFilterStateVariable		vcf1; // main filter
+AudioFilterStateVariable		vcf2; // main filter
 
 
 AudioMixer4						mixMaster; // master mixer
@@ -96,13 +99,13 @@ AudioConnection					patchCordKickMix3(sampleKick1, 0, mixKick, 2);
 AudioConnection					patchCordNoise1(noise1, 0, vcf_noise1, 0);
 
 AudioConnection					patchCordonSnare1(osc1, 0, mixOSCNoise, 0);
-AudioConnection					patchCordonSnare2(vcf_noise1, 0, mixOSCNoise, 1);
+AudioConnection					patchCordonSnare2(vcf_noise1, 1, mixOSCNoise, 1);
 
 AudioConnection					patchCordSnareMix1(mixOSCNoise, 0, mixSnare, 0);
 AudioConnection					patchCordSnareMix2(sampleSnare1, 0, mixSnare, 1);
 AudioConnection					patchCordSnareMix3(sampleSnare2, 0, mixSnare, 2);
 
-AudioConnection					patchCordHatMix1(vcf_noise1, 0, mixHat, 0);
+AudioConnection					patchCordHatMix1(vcf_noise1, 2, mixHat, 0);
 AudioConnection					patchCordHatMix2(sampleHat1, 0, mixHat, 1);
 AudioConnection					patchCordHatMix3(sampleHat2, 0, mixHat, 2);
 
@@ -112,8 +115,11 @@ AudioConnection					patchCordInstMix3(mixHat, 0, mixInstrument, 2);
 
 AudioConnection					patchCordVca1(mixInstrument, 0, vca1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordVca2(eg1, 0, vca1, 1); 	// env1 -> vca1
+
 AudioConnection					patchCordVcf1(vca1, 0, vcf1, 0);		// vca1 -> vcf1
 
+//AudioConnection					patchCordNoiseTest1(noise2, 0, vcf1, 0); // TEST
+AudioConnection					patchCordNoiseTest2(vcf1, 0, vcf2, 0); // TEST
 
 // Modulation Sources
 AudioConnection					patchCordfm1(dcMod1, 0, modmix1, 0);
@@ -134,7 +140,7 @@ AudioConnection					patchCordfm13(vcaMod1, 0, sampleHat1, 0);
 AudioConnection					patchCordfm14(vcaMod1, 0, sampleHat2, 0);
 
 AudioConnection					patchCordFilt1(vcf1, 0, mixMaster, 0);
-AudioConnection					patchCordFilt2(vcf1, 2, mixMaster, 1);
+AudioConnection					patchCordFilt2(vcf2, 2, mixMaster, 1);
 AudioConnection					patchCordImp1(impulse1, 0, mixMaster, 2);
 
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
@@ -144,7 +150,8 @@ AudioConnection					patchCordout(inverter, 0, out1, 0);
 CallistoHAL callisto;
 
 float frequency = 30;
-float cutoff = 30;
+float cutoffLow = 30;
+float cutoffHigh = 30;
 float decay = 40;
 float sourceMix = 0;
 float depth = 0;
@@ -180,6 +187,8 @@ void setup(){
 
 	vcf1.frequency(30);
 	vcf1.octaveControl(4.0);
+	vcf2.frequency(30);
+	vcf2.octaveControl(4.0);
 	
 	lfoMod1.begin(WAVEFORM_SINE);
 	lfoMod1.frequency(30);
@@ -195,9 +204,11 @@ void setup(){
 	egMod1.begin();
 	
 	vcf_noise1.frequency(60);
-	vcf_noise1.resonance(5.0);
+	vcf_noise1.resonance(4.0);
 	vcf_noise1.octaveControl(4.0);
 	noise1.amplitude(1.0);
+	
+	noise2.amplitude(1.0); // test
 	
 	sampleKick1.setSpeed(1.0);
 	sampleSnare1.setSpeed(1.0);
@@ -212,28 +223,31 @@ void setup(){
 	sampleHat2.setSample(AudioSampleHat2, 5441);
 	
 	mixMulti.gain(0, 1.0);
-	mixMulti.gain(1, 1.0);
-	mixMulti.gain(2, 1.0);
-	mixMulti.gain(3, 1.0);
+	mixMulti.gain(1, 0.8);
+	mixMulti.gain(2, 0.8);
+	mixMulti.gain(3, 0.8);
 	
-	mixKick.gain(0, 1.0);
+	mixOSCNoise.gain(0, 0.8);
+	mixOSCNoise.gain(1, 1.0);
+	
+	mixKick.gain(0, 0.0);
 	mixKick.gain(1, 0.0);
-	mixKick.gain(2, 0.0);
+	mixKick.gain(2, 1.0);
 	
-	mixSnare.gain(0, 1.0);
+	mixSnare.gain(0, 0.0);
 	mixSnare.gain(1, 0.0);
-	mixSnare.gain(2, 0.0);
+	mixSnare.gain(2, 1.0);
 	
-	mixHat.gain(0, 1.0);
+	mixHat.gain(0, 0.0);
 	mixHat.gain(1, 0.0);
-	mixHat.gain(2, 0.0);
+	mixHat.gain(2, 1.0);
 	
-	mixInstrument.gain(0, 1.0);
-	mixInstrument.gain(1, 1.0);
-	mixInstrument.gain(2, 0.0);
+	mixInstrument.gain(0, 0.0);
+	mixInstrument.gain(1, 0.0);
+	mixInstrument.gain(2, 1.0);
 	
-	mixMaster.gain(0, 1.0);
-	mixMaster.gain(1, 0.0);
+	mixMaster.gain(0, 0.0);
+	mixMaster.gain(1, 1.0);
 	mixMaster.gain(2, 0.0);
 	
 	inverter.gain(-0.9); // invert and reduce gain to avoid clipping on output opamp.
@@ -255,9 +269,19 @@ void loop(){
 	
 	callisto.update();
 	decay = max(callisto.readPotNorm(UI_D) * 500.0, 10.0);
-	cutoff = FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_F)*7.0-3.0);
 	
-	//rate = callisto.readPotNorm(UI_E) * decayBody;
+	cutoffLow = FREQ_MID_C * pow(2.0, min(callisto.readPotNorm(UI_F) * 2.0, 1.0 ) * 8.0-2.0);
+	cutoffHigh = FREQ_MID_C * pow(2.0, max(callisto.readPotNorm(UI_F) * 2.0, 1.0 ) * 9.0-13.0);
+	
+	Serial.print("Norm: ");
+	Serial.print(callisto.readPotNorm(UI_F));
+	Serial.print("\t\tScaled: ");
+	Serial.print(max(callisto.readPotNorm(UI_F) * 2.0, 1.0 ));
+	Serial.print("\t\tFreq: ");
+	Serial.println(cutoffHigh);
+	delay(5);
+	
+	rate = callisto.readPotNorm(UI_E) * decay;
 
 	depth = callisto.readPotNorm(UI_A);
 	//resonance = callisto.readPotNorm(UI_B) * 1.15;
@@ -266,7 +290,8 @@ void loop(){
 	AudioNoInterrupts();
 	osc1.frequency(callisto.readPitch());
 	
-	vcf1.frequency(min(cutoff, 14000.0));
+	vcf1.frequency(min(cutoffLow, 14000.0));
+	vcf2.frequency(min(cutoffHigh, 14000.0));
 	
 	vcf_noise1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
 	
@@ -274,10 +299,13 @@ void loop(){
 	osc3.frequency(callisto.readPitch() * 2.0 * width * width);
 	osc4.frequency(callisto.readPitch() * 2.99661 * width * width * width);
 	
-	modmix1.gain(0, depth);
+	lfoMod1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
+	
+	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
+	modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
 	
 	eg1.releaseTime(decay);
-	egMod1.releaseTime(decay / 4.0);
+	egMod1.releaseTime(rate);
 	
 	sampleKick1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
 	sampleSnare1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
