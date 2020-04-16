@@ -48,6 +48,8 @@ AudioPlayMemorySample			sampleSnare2;
 AudioPlayMemorySample			sampleHat1;
 AudioPlayMemorySample			sampleHat2;
 
+AudioFilterStateVariable		vcfKick1;
+
 AudioSynthWaveformDc			dcMod1;
 AudioSynthWaveformModulated		lfoMod1;
 AudioEnvelopeAR					egMod1;
@@ -60,7 +62,8 @@ AudioSynthWaveformModulated		osc2;
 AudioSynthWaveformModulated		osc3;
 AudioSynthWaveformModulated		osc4;
 
-AudioSynthNoiseWhite			noise2;
+//AudioSynthNoiseWhite			noise2;
+AudioSynthWaveformDc			dc2;
 
 AudioSynthNoisePink				noise1;
 AudioFilterStateVariable		vcf_noise1; // filter
@@ -95,6 +98,7 @@ AudioConnection					patchCordMulti4(osc4, 0, mixMulti, 3);
 AudioConnection					patchCordKickMix1(osc1, 0, mixKick, 0);
 AudioConnection					patchCordKickMix2(mixMulti, 0, mixKick, 1);
 AudioConnection					patchCordKickMix3(sampleKick1, 0, mixKick, 2);
+AudioConnection					patchCordKickMix4(mixKick, 0, vcfKick1, 0);
 
 AudioConnection					patchCordNoise1(noise1, 0, vcf_noise1, 0);
 
@@ -109,15 +113,17 @@ AudioConnection					patchCordHatMix1(vcf_noise1, 2, mixHat, 0);
 AudioConnection					patchCordHatMix2(sampleHat1, 0, mixHat, 1);
 AudioConnection					patchCordHatMix3(sampleHat2, 0, mixHat, 2);
 
-AudioConnection					patchCordInstMix1(mixKick, 0, mixInstrument, 0);
+AudioConnection					patchCordInstMix1(vcfKick1, 0, mixInstrument, 0);
 AudioConnection					patchCordInstMix2(mixSnare, 0, mixInstrument, 1);
 AudioConnection					patchCordInstMix3(mixHat, 0, mixInstrument, 2);
+AudioConnection					patchCordImp1(impulse1, 0, mixInstrument, 3);
 
-AudioConnection					patchCordVca1(mixInstrument, 0, vca1, 0); 		// osc1 -> vca1
+//AudioConnection					patchCordVca1(mixInstrument, 0, vca1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordVca2(eg1, 0, vca1, 1); 	// env1 -> vca1
 
 AudioConnection					patchCordVcf1(vca1, 0, vcf1, 0);		// vca1 -> vcf1
 
+AudioConnection					patchCordNoiseTest1(dc2, 0, vca1, 0); // TEST
 //AudioConnection					patchCordNoiseTest1(noise2, 0, vcf1, 0); // TEST
 AudioConnection					patchCordNoiseTest2(vcf1, 0, vcf2, 0); // TEST
 
@@ -132,7 +138,8 @@ AudioConnection					patchCordfm6(vcaMod1, 0, osc2, 0);
 AudioConnection					patchCordfm7(vcaMod1, 0, osc3, 0);
 AudioConnection					patchCordfm8(vcaMod1, 0, osc4, 0);
 
-AudioConnection					patchCordfm9(vcaMod1, 0, vcf_noise1, 1);	
+AudioConnection					patchCordfm9(vcaMod1, 0, vcf_noise1, 1);
+AudioConnection					patchCordfm9x(vcaMod1, 0, vcfKick1, 1);
 AudioConnection					patchCordfm10(vcaMod1, 0, sampleKick1, 0);
 AudioConnection					patchCordfm11(vcaMod1, 0, sampleSnare1, 0);
 AudioConnection					patchCordfm12(vcaMod1, 0, sampleSnare2, 0);
@@ -141,7 +148,6 @@ AudioConnection					patchCordfm14(vcaMod1, 0, sampleHat2, 0);
 
 AudioConnection					patchCordFilt1(vcf1, 0, mixMaster, 0);
 AudioConnection					patchCordFilt2(vcf2, 2, mixMaster, 1);
-AudioConnection					patchCordImp1(impulse1, 0, mixMaster, 2);
 
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
 AudioConnection					patchCordinv(mixMaster, 0, inverter, 0);
@@ -166,6 +172,8 @@ uint8_t lastMode = 0;
 uint8_t lastFilterMode = 0;
 
 void setup(){
+	delay(100); // reduce power consumption spike
+	
 	callisto.setModeCallback(MODE_A, modeAChanged);
 	callisto.setModeCallback(MODE_B, modeBChanged);
 
@@ -186,9 +194,13 @@ void setup(){
 	osc4.frequencyModulation(4.0);
 
 	vcf1.frequency(30);
-	vcf1.octaveControl(4.0);
+	//vcf1.octaveControl(4.0);
 	vcf2.frequency(30);
-	vcf2.octaveControl(4.0);
+	//vcf2.octaveControl(4.0);
+	vcf1.resonance(0.7);
+	vcf2.resonance(0.7);
+	vcfKick1.frequency(30);
+	vcfKick1.octaveControl(4.0);
 	
 	lfoMod1.begin(WAVEFORM_SINE);
 	lfoMod1.frequency(30);
@@ -208,7 +220,8 @@ void setup(){
 	vcf_noise1.octaveControl(4.0);
 	noise1.amplitude(1.0);
 	
-	noise2.amplitude(1.0); // test
+	dc2.amplitude(1.0);
+	//noise2.amplitude(1.0); // test
 	
 	sampleKick1.setSpeed(1.0);
 	sampleSnare1.setSpeed(1.0);
@@ -229,31 +242,38 @@ void setup(){
 	
 	mixOSCNoise.gain(0, 0.8);
 	mixOSCNoise.gain(1, 1.0);
+	mixOSCNoise.gain(2, 0.0);
+	mixOSCNoise.gain(3, 0.0);
 	
-	mixKick.gain(0, 0.0);
+	mixKick.gain(0, 1.0);
 	mixKick.gain(1, 0.0);
-	mixKick.gain(2, 1.0);
+	mixKick.gain(2, 0.0);
+	mixKick.gain(3, 0.0);
 	
-	mixSnare.gain(0, 0.0);
+	mixSnare.gain(0, 1.0);
 	mixSnare.gain(1, 0.0);
-	mixSnare.gain(2, 1.0);
+	mixSnare.gain(2, 0.0);
+	mixSnare.gain(3, 0.0);
 	
-	mixHat.gain(0, 0.0);
+	mixHat.gain(0, 1.0);
 	mixHat.gain(1, 0.0);
-	mixHat.gain(2, 1.0);
+	mixHat.gain(2, 0.0);
+	mixHat.gain(3, 0.0);
 	
-	mixInstrument.gain(0, 0.0);
-	mixInstrument.gain(1, 0.0);
-	mixInstrument.gain(2, 1.0);
+	mixInstrument.gain(0, 1.0); // kick
+	mixInstrument.gain(1, 0.0); // snare
+	mixInstrument.gain(2, 0.0); // hats
+	mixInstrument.gain(3, 0.0); // impulse
 	
 	mixMaster.gain(0, 0.0);
 	mixMaster.gain(1, 1.0);
 	mixMaster.gain(2, 0.0);
+	mixMaster.gain(3, 0.0);
 	
 	inverter.gain(-0.9); // invert and reduce gain to avoid clipping on output opamp.
 	
-	callisto.setMode(MODE_A, 2);
-	callisto.setMode(MODE_B, 2);
+	callisto.setMode(MODE_A, 0);
+	callisto.setMode(MODE_B, 0);
 }
 
 void loop(){
@@ -288,30 +308,33 @@ void loop(){
 	width = callisto.readPotNorm(UI_E) + 1.0;
 	
 	AudioNoInterrupts();
-	osc1.frequency(callisto.readPitch());
-	
-	vcf1.frequency(min(cutoffLow, 14000.0));
-	vcf2.frequency(min(cutoffHigh, 14000.0));
-	
-	vcf_noise1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
-	
-	osc2.frequency(callisto.readPitch() * 1.49829 * width);
-	osc3.frequency(callisto.readPitch() * 2.0 * width * width);
-	osc4.frequency(callisto.readPitch() * 2.99661 * width * width * width);
-	
-	lfoMod1.frequency(FREQ_MID_C * pow(2.0, callisto.readPotNorm(UI_E)*2.0-4.0));
-	
-	modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
-	modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
-	
-	eg1.releaseTime(decay);
-	egMod1.releaseTime(rate);
-	
-	sampleKick1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
-	sampleSnare1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
-	sampleSnare2.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
-	sampleHat1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
-	sampleHat2.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+		osc1.frequency(callisto.readPitch());
+		
+		vcf1.frequency(min(cutoffLow, 14000.0));
+		vcf2.frequency(min(cutoffHigh, 14000.0));
+		
+		vcfKick1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
+		vcf_noise1.frequency(min(callisto.readPitch() * 4.00, 14000.0));
+		
+		osc2.frequency(callisto.readPitch() * 1.49829 * width);
+		osc3.frequency(callisto.readPitch() * 2.0 * width * width);
+		osc4.frequency(callisto.readPitch() * 2.99661 * width * width * width);
+		
+		lfoMod1.frequency(FREQ_MID_C * pow(2.0, (1.0 - callisto.readPotNorm(UI_E))*2.0-4.0));
+		
+		/*
+		modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
+		modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
+		
+		eg1.releaseTime(decay);
+		egMod1.releaseTime(rate);
+		*/
+		
+		sampleKick1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+		sampleSnare1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+		sampleSnare2.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+		sampleHat1.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
+		sampleHat2.setSpeed(callisto.readPotNorm(UI_C) * 2.0);
   
 	AudioInterrupts();
 	
@@ -326,8 +349,8 @@ void modeAChanged(int mode){
 	Serial.println(mode);
 	
 	AudioNoInterrupts();
-	mixInstrument.gain(lastMode, 0.0);
-	mixInstrument.gain(mode, 1.0);
+		mixInstrument.gain(lastMode, 0.0);
+		mixInstrument.gain(mode, 1.0);
 	AudioInterrupts();
 	
 	lastMode = mode;
@@ -338,12 +361,12 @@ void modeBChanged(int mode){
 	Serial.println(mode);
 	
 	AudioNoInterrupts();
-	mixKick.gain(lastFilterMode, 0.0);
-	mixKick.gain(mode, 1.0);
-	mixSnare.gain(lastFilterMode, 0.0);
-	mixSnare.gain(mode, 1.0);
-	mixHat.gain(lastFilterMode, 0.0);
-	mixHat.gain(mode, 1.0);
+		mixKick.gain(lastFilterMode, 0.0);
+		mixKick.gain(mode, 1.0);
+		mixSnare.gain(lastFilterMode, 0.0);
+		mixSnare.gain(mode, 1.0);
+		mixHat.gain(lastFilterMode, 0.0);
+		mixHat.gain(mode, 1.0);
 	AudioInterrupts();
 	
 	lastFilterMode = mode;
@@ -353,24 +376,37 @@ void triggerChange(){
 	bool triggerState = !digitalReadFast(TRIGIN_PIN); // override any library calls for faster response TODO compare response time
 	
 	if(triggerState == HIGH){
-		osc1.sync();
-		osc2.sync();
-		osc3.sync();
-		osc4.sync();
-		lfoMod1.sync();
 		
-		eg1.noteOn();
-		egMod1.noteOn();
-		impulse1.begin();
-
+		AudioNoInterrupts();
+			osc1.sync();
+			osc2.sync();
+			osc3.sync();
+			osc4.sync();
+			lfoMod1.sync();
+			
+			modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
+			modmix1.gain(1,max(depth * 2.0 - 1.0, 0.0));
+		
+			eg1.releaseTime(decay);
+			egMod1.releaseTime(rate);
+			
+			eg1.noteOn();
+			egMod1.noteOn();
+			impulse1.begin();
+			
+			if ((lastMode == 0) & (lastFilterMode == 2))
+				sampleKick1.play();
+			if ((lastMode == 1) & (lastFilterMode == 1))
+				sampleSnare1.play();
+			if ((lastMode == 1) & (lastFilterMode == 2))
+				sampleSnare2.play();
+			if ((lastMode == 2) & (lastFilterMode == 1))
+				sampleHat1.play();
+			if ((lastMode == 2) & (lastFilterMode == 2))
+				sampleHat2.play();
+		AudioInterrupts();
+		
 		lastTrigger = millis();
-		
-		sampleKick1.play();
-		sampleSnare1.play();
-		sampleSnare2.play();
-		sampleHat1.play();
-		sampleHat2.play();
-		
 	} else {
 		eg1.noteOff();
 		egMod1.noteOff();
