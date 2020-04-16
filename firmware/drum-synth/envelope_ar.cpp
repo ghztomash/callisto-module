@@ -22,7 +22,7 @@ void AudioEnvelopeAR::update(void)
 	bp = block->data;
 	
 	for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-		yn = (yn1 * a >> 31) + (xn * ( INT32_MAX - a) >> 31);  
+		yn = (yn1 * a >> 32) + (xn * ( UINT32_MAX - a) >> 32);  
 		yn1 = yn;
 		*bp++ = yn >> 16;
 	}

@@ -118,12 +118,12 @@ AudioConnection					patchCordInstMix2(mixSnare, 0, mixInstrument, 1);
 AudioConnection					patchCordInstMix3(mixHat, 0, mixInstrument, 2);
 AudioConnection					patchCordImp1(impulse1, 0, mixInstrument, 3);
 
-//AudioConnection					patchCordVca1(mixInstrument, 0, vca1, 0); 		// osc1 -> vca1
+AudioConnection					patchCordVca1(mixInstrument, 0, vca1, 0); 		// osc1 -> vca1
 AudioConnection					patchCordVca2(eg1, 0, vca1, 1); 	// env1 -> vca1
 
 AudioConnection					patchCordVcf1(vca1, 0, vcf1, 0);		// vca1 -> vcf1
 
-AudioConnection					patchCordNoiseTest1(dc2, 0, vca1, 0); // TEST
+//AudioConnection					patchCordNoiseTest1(dc2, 0, vca1, 0); // TEST
 //AudioConnection					patchCordNoiseTest1(noise2, 0, vcf1, 0); // TEST
 AudioConnection					patchCordNoiseTest2(vcf1, 0, vcf2, 0); // TEST
 
