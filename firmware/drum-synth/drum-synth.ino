@@ -81,6 +81,7 @@ AudioEffectMultiply				vca1;
 AudioFilterStateVariable		vcf1; // main filter
 AudioFilterStateVariable		vcf2; // main filter
 
+AudioEffectFreeverb				reverb1;
 
 AudioMixer4						mixMaster; // master mixer
 AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
@@ -148,6 +149,8 @@ AudioConnection					patchCordfm14(vcaMod1, 0, sampleHat2, 0);
 
 AudioConnection					patchCordFilt1(vcf1, 0, mixMaster, 0);
 AudioConnection					patchCordFilt2(vcf2, 2, mixMaster, 1);
+AudioConnection					patchCordFilt3(vcf2, 2, reverb1, 0);
+AudioConnection					patchCordFilt4(reverb1, 0, mixMaster, 2);
 
 AudioConnection					patchCordoutlrms(mixMaster, 0, rms1, 0);
 AudioConnection					patchCordinv(mixMaster, 0, inverter, 0);
@@ -265,9 +268,12 @@ void setup(){
 	mixInstrument.gain(2, 0.0); // hats
 	mixInstrument.gain(3, 0.0); // impulse
 	
+	reverb1.roomsize(0.5);
+	reverb1.damping(0.5);
+	
 	mixMaster.gain(0, 0.0);
 	mixMaster.gain(1, 1.0);
-	mixMaster.gain(2, 0.0);
+	mixMaster.gain(2, 1.0);
 	mixMaster.gain(3, 0.0);
 	
 	inverter.gain(-0.9); // invert and reduce gain to avoid clipping on output opamp.
@@ -321,6 +327,10 @@ void loop(){
 		osc4.frequency(callisto.readPitch() * 2.99661 * width * width * width);
 		
 		lfoMod1.frequency(FREQ_MID_C * pow(2.0, (1.0 - callisto.readPotNorm(UI_E))*2.0-4.0));
+		
+		reverb1.roomsize(callisto.readPotNorm(UI_B)*0.8);
+		reverb1.damping(callisto.readPotNorm(UI_B));
+		mixMaster.gain(2, callisto.readPotNorm(UI_B));
 		
 		/*
 		modmix1.gain(0,max((1.0 - depth) * 2.0 - 1.0, 0.0));
