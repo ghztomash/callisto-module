@@ -32,7 +32,7 @@
 #include <EEPROM.h>
 
 #define VERSION 1
-#define DEBUG 1
+#define DEBUG 0
 
 // PIN defines
 #define LEDA_PIN 0
@@ -535,7 +535,7 @@ void CallistoHAL::loadCallibration(){
 }
 
 void CallistoHAL::debug(const char str[]){
-	#ifdef DEBUG
+	#if DEBUG
 		Serial.println(str);
 	#endif
 }
