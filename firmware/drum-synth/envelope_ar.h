@@ -36,7 +36,7 @@
 class AudioEnvelopeAR : public AudioStream
 {
 public:
-	AudioEnvelopeAR(void) : AudioStream(0,NULL),
+	AudioEnvelopeAR(void) : AudioStream(1, inputQueueArray),
 		running(0), a(0), xn(0), yn1(0) {
 	}
 
@@ -80,6 +80,7 @@ public:
 	virtual void update(void);
 
 private:
+	audio_block_t *inputQueueArray[1];
 	uint8_t	running;
 	uint32_t attackT;
 	uint32_t releaseT;
