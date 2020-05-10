@@ -224,11 +224,17 @@ void setup(){
 	sampleHat1.setSpeed(1.0);
 	sampleHat2.setSpeed(1.0);
 	
-	sampleKick1.setSample(AudioSampleKick, 4673);
-	sampleSnare1.setSample(AudioSampleSnare1, 4673);
-	sampleSnare2.setSample(AudioSampleClap1, 4673);
-	sampleHat1.setSample(AudioSampleHat1, 4673);
-	sampleHat2.setSample(AudioSampleHat2, 5441);
+	sampleKick1.frequencyModulation(4.0);
+	sampleSnare1.frequencyModulation(4.0);
+	sampleSnare2.frequencyModulation(4.0);
+	sampleHat1.frequencyModulation(4.0);
+	sampleHat2.frequencyModulation(4.0);
+	
+	sampleKick1.setSample(AudioSampleKick);
+	sampleSnare1.setSample(AudioSampleSnare1);
+	sampleSnare2.setSample(AudioSampleClap1);
+	sampleHat1.setSample(AudioSampleHat1);
+	sampleHat2.setSample(AudioSampleHat2);
 	
 	mixMulti.gain(0, 1.0);
 	mixMulti.gain(1, 0.8);
@@ -286,7 +292,7 @@ void loop(){
 	}
 	
 	callisto.update();
-	sampleSpeed = constrain((callisto.readPotNorm(UI_C) + callisto.readCVNorm(UI_A)) * 2.0, 0.0, 2.0);
+	sampleSpeed = constrain(pow(2.0, (callisto.readPotNorm(UI_C)-0.5)*4.0 + callisto.readCVVolt(UI_A)), 0.0, 8.0);
 	decay = constrain((callisto.readPotNorm(UI_D) + callisto.readCVNorm(UI_D)) * 500.0, 10.0 , 500.0);
 	cutoff = constrain(callisto.readPotNorm(UI_F) + callisto.readCVNorm(UI_F), 0.0, 1.0);
 	cutoffLow = FREQ_MID_C * pow(2.0, min(cutoff * 2.0, 1.0 ) * 8.0-2.0);
