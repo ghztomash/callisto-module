@@ -36,12 +36,25 @@ void AudioEnvelopeAR::update(void)
 	int16_t *bp;
 	uint32_t yn;
 	uint32_t i;
+	int32_t sample;
 
-	if (!running) {
-		return;
+	if(!running){
+		if (yn1 == 0) {
+			running = 0;
+			block = receiveReadOnly();
+			if (block) release(block);
+			return;
+		} else if (yn1 == INT32_MAX) {
+			running = 0;
+			block = receiveReadOnly();
+			if (!block) return;
+			transmit(block);
+			release(block);
+			return;
+		}
 	}
 	
-	block = allocate();
+	block = receiveWritable();
 	if (!block) {
 		return;
 	}
@@ -50,7 +63,8 @@ void AudioEnvelopeAR::update(void)
 	for (i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 		yn = (yn1 * (uint64_t)a >> 32) + (xn * (uint64_t)(UINT32_MAX - a) >> 32);  
 		yn1 = yn;
-		*bp++ = yn >> 16;
+		sample = *bp;
+		*bp++ = (sample * (uint64_t)yn) >> 31;
 		
 		if(yn == xn){
 			running = 0;
