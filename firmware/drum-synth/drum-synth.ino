@@ -52,7 +52,6 @@ AudioFilterStateVariable		vcfKick1;
 AudioSynthWaveformDc			dcMod1;
 AudioSynthWaveformModulated		lfoMod1;
 AudioEnvelopeAR					egMod1;
-//AudioEffectMultiply				vcaMod1;
 AudioMixer4						modmix1;
 
 AudioSynthWaveformModulated		osc1;
@@ -77,9 +76,7 @@ AudioMixer4						mixShaper;
 AudioEffectWaveshaper			waveshaper;
 
 AudioEnvelopeAR					eg1;
-//AudioEffectMultiply				vca1;
 AudioEnvelopeAR					egSnare1;
-//AudioEffectMultiply				vcaSnare1;
 AudioFilterStateVariable		vcf1; // main filter
 AudioFilterStateVariable		vcf2; // main filter
 
@@ -104,7 +101,6 @@ AudioConnection					patchCordKickMix4(mixKick, 0, vcfKick1, 0);
 AudioConnection					patchCordNoise1(noise1, 0, vcf_noise1, 0);
 
 AudioConnection					patchCordonSnare1(osc1, 0, egSnare1, 0);
-//AudioConnection					patchCordonSnare2(egSnare1, 0, vcaSnare1, 1);
 AudioConnection					patchCordonSnare3(egSnare1, 0, mixOSCNoise, 0);
 AudioConnection					patchCordonSnare4(vcf_noise1, 1, mixOSCNoise, 1);
 
@@ -122,7 +118,6 @@ AudioConnection					patchCordInstMix3(mixHat, 0, mixInstrument, 2);
 
 AudioConnection					patchCordVca3(mixInstrument, 0, mixShaper, 0); 		// osc1 -> vca1
 AudioConnection					patchCordVca4(mixShaper, 0, eg1, 0); 		// osc1 -> vca1
-//AudioConnection					patchCordVca2(eg1, 0, vca1, 1); 	// env1 -> vca1
 
 AudioConnection					patchCordVcf1(eg1, 0, vcf1, 0);		// vca1 -> vcf1
 AudioConnection					patchCordVcf2(vcf1, 0, vcf2, 0); // DJ style Filter
@@ -131,7 +126,6 @@ AudioConnection					patchCordVcf2(vcf1, 0, vcf2, 0); // DJ style Filter
 AudioConnection					patchCordfm1(dcMod1, 0, modmix1, 0);
 AudioConnection					patchCordfm2(lfoMod1, 0, modmix1, 1);
 AudioConnection					patchCordfm3(modmix1, 0, egMod1, 0);
-//AudioConnection					patchCordfm4(egMod1, 0, vcaMod1, 1);
 
 AudioConnection					patchCordfm5(egMod1, 0, osc1, 0);			// osc1 frequency modulation
 AudioConnection					patchCordfm6(egMod1, 0, osc2, 0);

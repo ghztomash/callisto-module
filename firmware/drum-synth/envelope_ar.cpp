@@ -38,8 +38,20 @@ void AudioEnvelopeAR::update(void)
 	uint32_t i;
 	int32_t sample;
 
-	if (!running) {
-		//return;
+	if(!running){
+		if (yn1 == 0) {
+			running = 0;
+			block = receiveReadOnly();
+			if (block) release(block);
+			return;
+		} else if (yn1 == INT32_MAX) {
+			running = 0;
+			block = receiveReadOnly();
+			if (!block) return;
+			transmit(block);
+			release(block);
+			return;
+		}
 	}
 	
 	block = receiveWritable();
