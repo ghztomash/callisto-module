@@ -224,11 +224,11 @@ void setup(){
 	sampleHat1.setSpeed(1.0);
 	sampleHat2.setSpeed(1.0);
 	
-	sampleKick1.frequencyModulation(4.0);
-	sampleSnare1.frequencyModulation(4.0);
-	sampleSnare2.frequencyModulation(4.0);
-	sampleHat1.frequencyModulation(4.0);
-	sampleHat2.frequencyModulation(4.0);
+	sampleKick1.frequencyModulation(2.0);
+	sampleSnare1.frequencyModulation(2.0);
+	sampleSnare2.frequencyModulation(2.0);
+	sampleHat1.frequencyModulation(2.0);
+	sampleHat2.frequencyModulation(2.0);
 	
 	sampleKick1.setSample(AudioSampleKick);
 	sampleSnare1.setSample(AudioSampleSnare1);
