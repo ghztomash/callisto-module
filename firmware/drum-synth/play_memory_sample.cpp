@@ -1,20 +1,33 @@
-
+/* Callisto Eurorack Module - Sample Playback Module
+ * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com
+ * Copyright (c) 2020 Tomash Ghz
+ *
+ * Please support GHz Labs and open-source hardware by purchasing
+ * products directly from GHz Labs, donating or becoming a Github Sponsor!
+ * 
+ * MIT License
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #include "play_memory_sample.h"
 #include "utility/dspinst.h"
-
-
-void AudioPlayMemorySample::play(const unsigned int *data, unsigned int size)
-{
-	playing = 0;
-	format = *data++;
-	next = data;
-	beginning = data;
-	length = format & 0xFFFFFF;
-	playing = format >> 24;
-	sampleSize = (int)(length/2) << 15;
-	phase = 0;
-}
 
 void AudioPlayMemorySample::play()
 {
@@ -25,7 +38,7 @@ void AudioPlayMemorySample::play()
 	phase = 0;
 }
 
-void AudioPlayMemorySample::setSample(const unsigned int *data, unsigned int size)
+void AudioPlayMemorySample::setSample(const unsigned int *data)
 {
 	playing = 0;
 	format = *data++;
@@ -44,35 +57,31 @@ void AudioPlayMemorySample::update(void)
 {
 	audio_block_t *block, *blockb;
 	const unsigned int *in;
-	int16_t *out, *pmod;
+	int16_t *out;
+	int64_t pmod = 0;
 	uint32_t tmp32;
 	int i;
 	uint32_t index;
-	int32_t local_phase_increment;
+	int64_t local_phase_increment;
 
 	if (!playing) return;
+	
 	block = allocate();
-	if (block == NULL) return;
+	if (!block) return;
 	
 	blockb = receiveReadOnly(0);
 
-	//Serial.write('.');
-
 	out = block->data;
-	pmod = blockb->data;
-	in = next;
-	//s0 = prior;
 	
-	local_phase_increment = phase_incr + *pmod;
+	if (blockb){
+		pmod = *blockb->data * modulation_factor >> 15;
+	}
+	
+	in = next;
+	
+	local_phase_increment = phase_incr + pmod;
 	if (local_phase_increment <= 0)
 		local_phase_increment = 1;
-	
-	
-	//Serial.print(phase_incr);
-	//Serial.print('\t');
-	//Serial.print(*pmod);
-	//Serial.print('\t');
-	//Serial.println(local_phase_increment);
 
 	switch (playing) {
 	  case 0x81: // 16 bit PCM, 44100 Hz
@@ -89,10 +98,8 @@ void AudioPlayMemorySample::update(void)
 					tmp32 = in[index];
 					*out++ = (int16_t)(tmp32 & 65535);
 					*out++ = (int16_t)(tmp32 >> 16);
-			}
-				//Serial.println(*pmod);
-				
-				phase += local_phase_increment; // + mod * pmod;
+			}	
+			phase += local_phase_increment;
 		}
 		break;
 
@@ -174,7 +181,6 @@ uint32_t AudioPlayMemorySample::lengthMillis(void)
 uint32_t AudioPlayMemorySample::lengthBytes(void)
 {
 	const uint32_t *b;
-	uint32_t b2m;
 
 	__disable_irq();
 	b = (const uint32_t *)beginning;
