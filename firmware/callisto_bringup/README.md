@@ -1,6 +1,6 @@
 ## Bringup Firmware
 
-Firmware to test all hardware capabilities and ADC callibration.
+Firmware to test all hardware capabilities and ADC calibration.
 
 ### CLI commands
 * `cal` run calibration.
@@ -9,7 +9,7 @@ Firmware to test all hardware capabilities and ADC callibration.
 * `res` reset calibration to default.
 * `amp` output amplitude from 0.0 to 1.0.
 * `freq` output sinwave frequency.
-* `size` sampling statistics size for callibration.
+* `size` sampling statistics size for calibration.
 * `avr` ADC averaging setting.
 * `bit` ADC bithdepth setting.
 * `ref` set target voltage for ADC input offset.
