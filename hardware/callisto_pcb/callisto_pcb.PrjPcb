@@ -220,215 +220,207 @@ DocumentPath=Project Outputs for callisto_pcb\Gerbers\Bill of Materials\Bill of 
 DItemRevisionGUID=
 
 [GeneratedDocument2]
-DocumentPath=Project Outputs for callisto_pcb\Gerbers\Bill of Materials\Bill of Materials-callisto_pcb.csv
-DItemRevisionGUID=
-
-[GeneratedDocument3]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Board\callisto_board-RoundHoles-NonPlated.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument4]
+[GeneratedDocument3]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Board\callisto_board-RoundHoles-Plated.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument5]
+[GeneratedDocument4]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Board\callisto_board-SlotHoles-Plated.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument6]
+[GeneratedDocument5]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Board\callisto_board.DRR
 DItemRevisionGUID=
 
-[GeneratedDocument7]
+[GeneratedDocument6]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.EXTREP
 DItemRevisionGUID=
 
-[GeneratedDocument8]
+[GeneratedDocument7]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GBL
 DItemRevisionGUID=
 
-[GeneratedDocument9]
+[GeneratedDocument8]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GBO
 DItemRevisionGUID=
 
-[GeneratedDocument10]
+[GeneratedDocument9]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GBP
 DItemRevisionGUID=
 
-[GeneratedDocument11]
+[GeneratedDocument10]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GBS
 DItemRevisionGUID=
 
-[GeneratedDocument12]
+[GeneratedDocument11]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GD1
 DItemRevisionGUID=
 
-[GeneratedDocument13]
+[GeneratedDocument12]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GG1
 DItemRevisionGUID=
 
-[GeneratedDocument14]
+[GeneratedDocument13]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GKO
 DItemRevisionGUID=
 
-[GeneratedDocument15]
+[GeneratedDocument14]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GM1
 DItemRevisionGUID=
 
-[GeneratedDocument16]
+[GeneratedDocument15]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GM11
 DItemRevisionGUID=
 
-[GeneratedDocument17]
+[GeneratedDocument16]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GM13
 DItemRevisionGUID=
 
-[GeneratedDocument18]
+[GeneratedDocument17]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GM15
 DItemRevisionGUID=
 
-[GeneratedDocument19]
+[GeneratedDocument18]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GM16
 DItemRevisionGUID=
 
-[GeneratedDocument20]
+[GeneratedDocument19]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GPB
 DItemRevisionGUID=
 
-[GeneratedDocument21]
+[GeneratedDocument20]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GPT
 DItemRevisionGUID=
 
-[GeneratedDocument22]
+[GeneratedDocument21]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GTL
 DItemRevisionGUID=
 
-[GeneratedDocument23]
+[GeneratedDocument22]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GTO
 DItemRevisionGUID=
 
-[GeneratedDocument24]
+[GeneratedDocument23]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GTP
 DItemRevisionGUID=
 
-[GeneratedDocument25]
+[GeneratedDocument24]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.GTS
 DItemRevisionGUID=
 
-[GeneratedDocument26]
+[GeneratedDocument25]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Board\callisto_board.LDP
 DItemRevisionGUID=
 
-[GeneratedDocument27]
+[GeneratedDocument26]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Board\callisto_board.REP
 DItemRevisionGUID=
 
-[GeneratedDocument28]
+[GeneratedDocument27]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Panel\callisto_panel-RoundHoles-NonPlated.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument29]
+[GeneratedDocument28]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Panel\callisto_panel-SlotHoles-NonPlated.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument30]
+[GeneratedDocument29]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Panel\callisto_panel.DRR
 DItemRevisionGUID=
 
-[GeneratedDocument31]
+[GeneratedDocument30]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.EXTREP
 DItemRevisionGUID=
 
-[GeneratedDocument32]
+[GeneratedDocument31]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GBL
 DItemRevisionGUID=
 
-[GeneratedDocument33]
+[GeneratedDocument32]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GBO
 DItemRevisionGUID=
 
-[GeneratedDocument34]
+[GeneratedDocument33]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GBP
 DItemRevisionGUID=
 
-[GeneratedDocument35]
+[GeneratedDocument34]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GBS
 DItemRevisionGUID=
 
-[GeneratedDocument36]
+[GeneratedDocument35]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GD1
 DItemRevisionGUID=
 
-[GeneratedDocument37]
+[GeneratedDocument36]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GG1
 DItemRevisionGUID=
 
-[GeneratedDocument38]
+[GeneratedDocument37]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GKO
 DItemRevisionGUID=
 
-[GeneratedDocument39]
+[GeneratedDocument38]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GM1
 DItemRevisionGUID=
 
-[GeneratedDocument40]
+[GeneratedDocument39]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GM11
 DItemRevisionGUID=
 
-[GeneratedDocument41]
+[GeneratedDocument40]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GM13
 DItemRevisionGUID=
 
-[GeneratedDocument42]
+[GeneratedDocument41]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GM15
 DItemRevisionGUID=
 
-[GeneratedDocument43]
+[GeneratedDocument42]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GM16
 DItemRevisionGUID=
 
-[GeneratedDocument44]
+[GeneratedDocument43]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GPB
 DItemRevisionGUID=
 
-[GeneratedDocument45]
+[GeneratedDocument44]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GPT
 DItemRevisionGUID=
 
-[GeneratedDocument46]
+[GeneratedDocument45]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GTL
 DItemRevisionGUID=
 
-[GeneratedDocument47]
+[GeneratedDocument46]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GTO
 DItemRevisionGUID=
 
-[GeneratedDocument48]
+[GeneratedDocument47]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GTP
 DItemRevisionGUID=
 
-[GeneratedDocument49]
+[GeneratedDocument48]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.GTS
 DItemRevisionGUID=
 
-[GeneratedDocument50]
+[GeneratedDocument49]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto NC Drill Files Panel\callisto_panel.LDP
 DItemRevisionGUID=
 
-[GeneratedDocument51]
+[GeneratedDocument50]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Gerber Files Panel\callisto_panel.REP
 DItemRevisionGUID=
 
-[GeneratedDocument52]
+[GeneratedDocument51]
 DocumentPath=Project Outputs for callisto_pcb\Design Rule Check - callisto_board.html
 DItemRevisionGUID=
 
-[GeneratedDocument53]
+[GeneratedDocument52]
 DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Pick and place files\Pick Place for callisto_board(DNF).csv
-DItemRevisionGUID=
-
-[GeneratedDocument54]
-DocumentPath=Project Outputs for callisto_pcb\Gerbers\Callisto Pick and place files\Pick Place for callisto_board.csv
 DItemRevisionGUID=
 
 [Configuration1]
@@ -446,15 +438,15 @@ AutoOpenFile=-1
 AutoOpenOutJob=-1
 
 [Generic_SmartPDFSettings]
-ProjectMode=0
+ProjectMode=-1
 ZoomPrecision=50
 AddNetsInformation=-1
 AddNetPins=-1
 AddNetNetLabels=-1
 AddNetPorts=-1
 ShowComponentParameters=-1
-GlobalBookmarks=0
-ExportBOM=0
+GlobalBookmarks=-1
+ExportBOM=-1
 TemplateFilename=
 TemplateStoreRelative=-1
 PCB_PrintColor=0
@@ -468,13 +460,13 @@ SCH_NoERCSymbolsToShow="Thin Cross","Thick Cross","Small Cross",Checkbox,Triangl
 SCH_ShowNote=-1
 SCH_ShowNoteCollapsed=-1
 SCH_ExpandLogicalToPhysical=-1
-SCH_VariantName=
+SCH_VariantName=DNF
 SCH_ExpandComponentDesignators=-1
 SCH_ExpandNetlabels=0
 SCH_ExpandPorts=0
 SCH_ExpandSheetNumber=0
 SCH_ExpandDocumentNumber=0
-SCH_HasExpandLogicalToPhysicalSheets=0
+SCH_HasExpandLogicalToPhysicalSheets=-1
 SaveSettingsToOutJob=0
 
 [Generic_EDE]
@@ -680,7 +672,9 @@ OutputName9=Schematic Prints
 OutputDocumentPath9=
 OutputVariantName9=
 OutputDefault9=0
-PageOptions9=Record=PageOptions|CenterHorizontal=True|CenterVertical=True|PrintScale=1.00|XCorrection=1.00|YCorrection=1.00|PrintKind=1|BorderSize=5000000|LeftOffset=0|BottomOffset=0|Orientation=2|PaperLength=1000|PaperWidth=1000|Scale=100|PaperSource=7|PrintQuality=-3|MediaType=1|DitherType=10|PrintScaleMode=1|PaperKind=Letter|PaperIndex=1
+PageOptions9=Record=PageOptions|CenterHorizontal=True|CenterVertical=True|PrintScale=0.68|XCorrection=1.00|YCorrection=1.00|PrintKind=0|BorderSize=5000000|LeftOffset=0|BottomOffset=0|Orientation=2|PaperLength=1000|PaperWidth=1000|Scale=100|PaperSource=7|PrintQuality=-3|MediaType=1|DitherType=10|PrintScaleMode=1|PaperKind=Letter|PaperIndex=1
+Configuration9_Name1=OutputConfigurationParameter1
+Configuration9_Item1=Record=SchPrintView|ShowNoERC=True|ShowParamSet=True|ShowProbe=True|ShowBlanket=True|NoERCSymbolsToShow="Thin Cross","Thick Cross","Small Cross",Checkbox,Triangle|ShowNote=True|ShowNoteCollapsed=True|ShowOpenEnds=True|ExpandDesignator=True|ExpandNetLabel=False|ExpandPort=False|ExpandSheetNum=False|ExpandDocNum=False|PrintArea=0|PrintAreaRect.X1=0|PrintAreaRect.Y1=0|PrintAreaRect.X2=0|PrintAreaRect.Y2=0
 OutputType10=SimView Print
 OutputName10=SimView Prints
 OutputDocumentPath10=
