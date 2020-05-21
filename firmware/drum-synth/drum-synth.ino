@@ -167,17 +167,20 @@ float cutoff = 0.7;
 float frequencyHarmonics = 30;
 float overdrive = 0;
 
+volatile uint8_t trigger = 0;
 uint32_t lastTrigger = 0;
-uint8_t lastMode = 0;
-uint8_t lastFilterMode = 0;
+volatile uint8_t lastMode = 0;
+volatile uint8_t lastFilterMode = 0;
 
 void setup(){
-	delay(100); // reduce power consumption spike
+	delay(100 + random(100)); // reduce power consumption spike
+	
+	pinMode(10, OUTPUT);
 	
 	callisto.setModeCallback(MODE_A, modeAChanged);
 	callisto.setModeCallback(MODE_B, modeBChanged);
 
-	callisto.setTriggerChangeCallback(triggerChange);
+	callisto.setTriggerCallback(triggerChange);
 	
 	AudioMemory(64);
 	dcMod1.amplitude(0.5);
@@ -280,17 +283,7 @@ void setup(){
 }
 
 void loop(){
-	
-	if(millis() - lastTrigger >= 5){
-		egMod1.noteOff();
 		
-		if(!HOLD_TRIGGER){
-			eg1.noteOff();
-			egSnare1.noteOff();
-		}
-			
-	}
-	
 	callisto.update();
 	sampleSpeed = constrain(pow(2.0, (callisto.readPotNorm(UI_C)-0.5)*4.0 + callisto.readCVVolt(UI_A)), 0.0, 8.0);
 	decay = constrain((callisto.readPotNorm(UI_D) + callisto.readCVNorm(UI_D)) * 500.0, 10.0 , 500.0);
@@ -336,6 +329,46 @@ void loop(){
   
 	AudioInterrupts();
 	
+	if (trigger){
+		noInterrupts();
+		trigger = 0;
+		interrupts();
+		
+		AudioNoInterrupts();
+		osc1.sync();
+		osc2.sync();
+		osc3.sync();
+		osc4.sync();
+		lfoMod1.sync();
+		
+		eg1.noteOn();
+		egSnare1.noteOn();
+		egMod1.noteOn();
+		
+		if ((lastMode == 0) & (lastFilterMode == 2))
+			sampleKick1.play();
+		if ((lastMode == 1) & (lastFilterMode == 1))
+			sampleSnare1.play();
+		if ((lastMode == 1) & (lastFilterMode == 2))
+			sampleSnare2.play();
+		if ((lastMode == 2) & (lastFilterMode == 1))
+			sampleHat1.play();
+		if ((lastMode == 2) & (lastFilterMode == 2))
+			sampleHat2.play();
+		AudioInterrupts();
+		lastTrigger = millis();
+	}
+	
+	if(millis() - lastTrigger >= 5){
+		egMod1.noteOff();
+		
+		if(!HOLD_TRIGGER){
+			eg1.noteOff();
+			egSnare1.noteOff();
+		}
+			
+	}
+	
 	if(rms1.available()){
 		float rms = rms1.read();
 		callisto.setTrigLED(rms * 255);
@@ -367,38 +400,7 @@ void modeBChanged(int mode){
 }
 
 void triggerChange(){
-	bool triggerState = !digitalReadFast(TRIGIN_PIN); // override any library calls for faster response TODO compare response time
-	
-	if(triggerState == HIGH){
-		
-		AudioNoInterrupts();
-			osc1.sync();
-			osc2.sync();
-			osc3.sync();
-			osc4.sync();
-			lfoMod1.sync();
-			
-			eg1.noteOn();
-			egSnare1.noteOn();
-			egMod1.noteOn();
-			
-			if ((lastMode == 0) & (lastFilterMode == 2))
-				sampleKick1.play();
-			if ((lastMode == 1) & (lastFilterMode == 1))
-				sampleSnare1.play();
-			if ((lastMode == 1) & (lastFilterMode == 2))
-				sampleSnare2.play();
-			if ((lastMode == 2) & (lastFilterMode == 1))
-				sampleHat1.play();
-			if ((lastMode == 2) & (lastFilterMode == 2))
-				sampleHat2.play();
-		AudioInterrupts();
-		
-		lastTrigger = millis();
-	} else {
-		eg1.noteOff();
-		egSnare1.noteOff();
-		egMod1.noteOff();
-	}
-	
+	noInterrupts();
+	trigger = 1;
+	interrupts();
 }

@@ -355,13 +355,13 @@ void CallistoHAL::setModeCallback(int modeSelector, void (*callback)(int)){ // a
 void CallistoHAL::setTriggerCallback(void (*callback)()){ // assign trigger callback function
 	if(callback==NULL)
 		return;
-	attachInterrupt(TRIGIN_PIN, callback, FALLING);
+	attachInterrupt(digitalPinToInterrupt(TRIGIN_PIN), callback, FALLING);
 }
 
 void CallistoHAL::setTriggerChangeCallback(void (*callback)()){ // assign trigger off callback function
 	if(callback==NULL)
 		return;
-	attachInterrupt(TRIGIN_PIN, callback, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(TRIGIN_PIN), callback, CHANGE);
 }
 
 void CallistoHAL::setButtonCallback(int button, void (*callback)()){ // assign trigger callback function 
@@ -369,9 +369,9 @@ void CallistoHAL::setButtonCallback(int button, void (*callback)()){ // assign t
 	if(callback==NULL)
 		return;
 	if (button==0)
-		attachInterrupt(SWITCHA_PIN, callback, FALLING);
+		attachInterrupt(digitalPinToInterrupt(SWITCHA_PIN), callback, FALLING);
 	else if (button==1)
-		attachInterrupt(SWITCHB_PIN, callback, FALLING);
+		attachInterrupt(digitalPinToInterrupt(SWITCHB_PIN), callback, FALLING);
 }
 
 void CallistoHAL::setLED(int led, bool state){ // manually change LED state
