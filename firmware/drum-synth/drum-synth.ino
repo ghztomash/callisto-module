@@ -30,11 +30,11 @@
 #include "envelope_ar.h"
 #include "play_memory_sample.h"
 
-#include "AudioSampleKick.h"
-#include "AudioSampleSnare1.h"
-#include "AudioSampleClap1.h"
-#include "AudioSampleHat1.h"
-#include "AudioSampleHat2.h"
+#include "AudioSampleCKick.h"
+#include "AudioSampleCsnare.h"
+#include "AudioSampleCclap.h"
+#include "AudioSampleChat1.h"
+#include "AudioSampleChat2.h"
 
 #define VERSION 1
 #define HOLD_TRIGGER 0
@@ -205,7 +205,7 @@ void setup(){
 	
 	lfoMod1.begin(WAVEFORM_SINE);
 	lfoMod1.frequency(30);
-	lfoMod1.amplitude(1.0);
+	lfoMod1.amplitude(0.5);
 	
 	modmix1.gain(0,1.0);
 	modmix1.gain(1,0.0);
@@ -233,11 +233,11 @@ void setup(){
 	sampleHat1.frequencyModulation(3.0);
 	sampleHat2.frequencyModulation(3.0);
 	
-	sampleKick1.setSample(AudioSampleKick);
-	sampleSnare1.setSample(AudioSampleSnare1);
-	sampleSnare2.setSample(AudioSampleClap1);
-	sampleHat1.setSample(AudioSampleHat1);
-	sampleHat2.setSample(AudioSampleHat2);
+	sampleKick1.setSample(AudioSampleCkick);
+	sampleSnare1.setSample(AudioSampleCsnare);
+	sampleSnare2.setSample(AudioSampleCclap);
+	sampleHat1.setSample(AudioSampleChat1);
+	sampleHat2.setSample(AudioSampleChat2);
 	
 	mixMulti.gain(0, 1.0);
 	mixMulti.gain(1, 0.8);
@@ -391,9 +391,15 @@ void modeBChanged(int mode){
 		mixKick.gain(lastFilterMode, 0.0);
 		mixKick.gain(mode, 1.0);
 		mixSnare.gain(lastFilterMode, 0.0);
-		mixSnare.gain(mode, 1.0);
+		if(mode==0)
+			mixSnare.gain(mode, 1.0);
+		else
+			mixSnare.gain(mode, 0.8);
 		mixHat.gain(lastFilterMode, 0.0);
-		mixHat.gain(mode, 1.0);
+		if(mode==0)
+			mixHat.gain(mode, 1.0);
+		else
+			mixHat.gain(mode, 0.8);
 	AudioInterrupts();
 	
 	lastFilterMode = mode;
