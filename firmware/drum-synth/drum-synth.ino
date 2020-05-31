@@ -205,7 +205,7 @@ void setup(){
 	
 	lfoMod1.begin(WAVEFORM_SINE);
 	lfoMod1.frequency(30);
-	lfoMod1.amplitude(0.5);
+	lfoMod1.amplitude(0.75);
 	
 	modmix1.gain(0,1.0);
 	modmix1.gain(1,0.0);
