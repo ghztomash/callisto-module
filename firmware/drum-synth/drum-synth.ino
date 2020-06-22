@@ -29,6 +29,8 @@
 #include "callisto_hal.h"
 #include "envelope_ar.h"
 #include "play_memory_sample.h"
+#include "filter_variable.h"
+#include "synth_waveform.h"
 
 #include "AudioSampleCKick.h"
 #include "AudioSampleCsnare.h"
@@ -36,7 +38,6 @@
 #include "AudioSampleChat1.h"
 #include "AudioSampleChat2.h"
 
-#define VERSION 1
 #define HOLD_TRIGGER 0
 
 // Audio Objects
@@ -47,23 +48,22 @@ AudioPlayMemorySample			sampleSnare2;
 AudioPlayMemorySample			sampleHat1;
 AudioPlayMemorySample			sampleHat2;
 
-AudioFilterStateVariable		vcfKick1;
+AudioFilterStateVariableGhz		vcfKick1;
 
 AudioSynthWaveformDc			dcMod1;
-AudioSynthWaveformModulated		lfoMod1;
+AudioSynthWaveformModulatedGhz	lfoMod1;
 AudioEnvelopeAR					egMod1;
 AudioMixer4						modmix1;
 
-AudioSynthWaveformModulated		osc1;
-AudioSynthWaveformModulated		osc2;
-AudioSynthWaveformModulated		osc3;
-AudioSynthWaveformModulated		osc4;
+AudioSynthWaveformModulatedGhz	osc1;
+AudioSynthWaveformModulatedGhz	osc2;
+AudioSynthWaveformModulatedGhz	osc3;
+AudioSynthWaveformModulatedGhz	osc4;
 
 AudioSynthWaveformDc			dc2;
 
 AudioSynthNoisePink				noise1;
-AudioFilterStateVariable		vcf_noise1; // filter
-
+AudioFilterStateVariableGhz		vcf_noise1; // filter
 
 AudioMixer4						mixKick;
 AudioMixer4						mixSnare;
@@ -77,8 +77,8 @@ AudioEffectWaveshaper			waveshaper;
 
 AudioEnvelopeAR					eg1;
 AudioEnvelopeAR					egSnare1;
-AudioFilterStateVariable		vcf1; // main filter
-AudioFilterStateVariable		vcf2; // main filter
+AudioFilterStateVariableGhz		vcf1; // main filter
+AudioFilterStateVariableGhz		vcf2; // main filter
 
 AudioMixer4						mixMaster; // master mixer
 AudioAmplifier					inverter; // invert waveform to have the correct phase (inverting opamp configuration)
@@ -174,8 +174,6 @@ volatile uint8_t lastFilterMode = 0;
 
 void setup(){
 	delay(100 + random(100)); // reduce power consumption spike
-	
-	pinMode(10, OUTPUT);
 	
 	callisto.setModeCallback(MODE_A, modeAChanged);
 	callisto.setModeCallback(MODE_B, modeBChanged);
